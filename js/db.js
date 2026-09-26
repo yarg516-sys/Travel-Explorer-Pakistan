@@ -1,407 +1,307 @@
 /**
- * TRAVEL EXPLORER PAKISTAN - UNIVERSAL DATABASE LAYER
- * Seamlessly interfaces with Supabase Cloud backend with graceful local persistence fallback.
+ * TRAVEL EXPLORER PAKISTAN - SUPABASE DATABASE ADAPTER
+ * Direct, live integration with Supabase Cloud Database.
+ * Supabase is the sole source of truth.
  */
 
-const STORAGE_KEYS = {
-  DESTINATIONS: "tep_destinations",
-  PACKAGES: "tep_packages",
-  BOOKINGS: "tep_bookings",
-  REVIEWS: "tep_reviews",
-  USER: "tep_current_user",
-  SETTINGS: "tep_settings"
-};
-
-// Initialize Local Store with default data if empty
-function initializeLocalStorage() {
-  if (!localStorage.getItem(STORAGE_KEYS.DESTINATIONS)) {
-    localStorage.setItem(STORAGE_KEYS.DESTINATIONS, JSON.stringify(window.TEP_DATA.destinations));
+function getClientOrThrow() {
+  const client = getSupabaseClient();
+  if (!client) {
+    throw new Error("Unable to connect to Supabase. Please ensure the Supabase client library is loaded.");
   }
-  if (!localStorage.getItem(STORAGE_KEYS.PACKAGES)) {
-    localStorage.setItem(STORAGE_KEYS.PACKAGES, JSON.stringify(window.TEP_DATA.packages));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.REVIEWS)) {
-    localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(window.TEP_DATA.reviews));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.BOOKINGS)) {
-    // Seed sample bookings for realistic demonstration
-    const sampleBookings = [
-      {
-        id: "bkg-001",
-        booking_reference: "TEP-2026-9481",
-        package_id: "pkg-hunza-expedition",
-        package_title: "Karakoram Grandeur: Ultimate Hunza & Khunjerab Expedition",
-        destination_name: "Hunza Valley",
-        travel_date: "2026-10-10",
-        travelers_count: 2,
-        travelers_breakdown: { adults: 2, children: 0 },
-        customer_name: "Taimur Khan",
-        customer_email: "taimur.khan@gmail.com",
-        customer_phone: "+92 300 1234567",
-        customer_cnic: "37405-1234567-1",
-        departure_city: "Islamabad",
-        addons: ["Camp & Sleeping Bag Upgrade"],
-        special_requests: "Window seat preferred during coaster journey",
-        subtotal_pkr: 170000,
-        addons_pkr: 6000,
-        total_pkr: 176000,
-        payment_method: "Bank Transfer / Raast",
-        payment_status: "Verified",
-        booking_status: "Confirmed",
-        created_at: new Date(Date.now() - 86400000 * 3).toISOString()
-      },
-      {
-        id: "bkg-002",
-        booking_reference: "TEP-2026-5812",
-        package_id: "pkg-swat-kalam",
-        package_title: "Jewels of Swat & Kalam Valley: Alpine Paradise",
-        destination_name: "Swat Valley",
-        travel_date: "2026-10-18",
-        travelers_count: 3,
-        travelers_breakdown: { adults: 2, children: 1 },
-        customer_name: "Fatima Zahra",
-        customer_email: "fatima.zahra@outlook.com",
-        customer_phone: "+92 321 9876543",
-        customer_cnic: "35201-9876543-2",
-        departure_city: "Lahore",
-        addons: ["Airport VIP Pickup", "Professional Drone / Photographer"],
-        special_requests: "Vegetarian meal options for 1 traveler",
-        subtotal_pkr: 126000,
-        addons_pkr: 12000,
-        total_pkr: 138000,
-        payment_method: "JazzCash",
-        payment_status: "Pending",
-        booking_status: "Pending",
-        created_at: new Date(Date.now() - 86400000).toISOString()
-      }
-    ];
-    localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(sampleBookings));
-  }
+  return client;
 }
 
-// Call initialization
-initializeLocalStorage();
-
-/**
- * Universal Database API
- */
 const TEP_DB = {
-  // -------------------------------------------------------------
-  // DESTINATIONS
-  // -------------------------------------------------------------
+  // =============================================================
+  // DESTINATIONS (Supabase public.destinations)
+  // =============================================================
   async getDestinations() {
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        const { data, error } = await client.from("destinations").select("*").order("name");
-        if (!error && data && data.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.DESTINATIONS, JSON.stringify(data));
-          return data;
-        }
-      } catch (e) {
-        console.warn("Supabase getDestinations fallback:", e);
-      }
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("destinations")
+      .select("*")
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Supabase Error (getDestinations):", error);
+      throw new Error(`Supabase query failed for destinations: ${error.message}`);
     }
-    const local = localStorage.getItem(STORAGE_KEYS.DESTINATIONS);
-    return local ? JSON.parse(local) : window.TEP_DATA.destinations;
+    return data || [];
   },
 
   async getDestinationById(id) {
-    const list = await this.getDestinations();
-    return list.find(d => d.id === id) || null;
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("destinations")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) {
+      console.error(`Supabase Error (getDestinationById ${id}):`, error);
+      throw new Error(`Failed to load destination '${id}' from Supabase: ${error.message}`);
+    }
+    return data;
   },
 
   async saveDestination(dest) {
-    // 1. Update Local Storage
-    const list = await this.getDestinations();
-    const idx = list.findIndex(d => d.id === dest.id);
-    if (idx >= 0) {
-      list[idx] = { ...list[idx], ...dest };
-    } else {
-      list.push(dest);
-    }
-    localStorage.setItem(STORAGE_KEYS.DESTINATIONS, JSON.stringify(list));
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("destinations")
+      .upsert(dest, { onConflict: "id" })
+      .select();
 
-    // 2. Sync to Supabase
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        await client.from("destinations").upsert(dest, { onConflict: "id" });
-      } catch (e) {
-        console.warn("Supabase saveDestination error:", e);
-      }
+    if (error) {
+      console.error("Supabase Error (saveDestination):", error);
+      throw new Error(`Failed to save destination in Supabase: ${error.message}`);
     }
-    return dest;
+    return data && data[0] ? data[0] : dest;
   },
 
   async deleteDestination(id) {
-    // 1. Update Local Storage
-    let list = await this.getDestinations();
-    list = list.filter(d => d.id !== id);
-    localStorage.setItem(STORAGE_KEYS.DESTINATIONS, JSON.stringify(list));
+    const client = getClientOrThrow();
+    const { error } = await client
+      .from("destinations")
+      .delete()
+      .eq("id", id);
 
-    // 2. Sync to Supabase
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        await client.from("destinations").delete().eq("id", id);
-      } catch (e) {
-        console.warn("Supabase deleteDestination error:", e);
-      }
+    if (error) {
+      console.error("Supabase Error (deleteDestination):", error);
+      throw new Error(`Failed to delete destination from Supabase: ${error.message}`);
     }
     return true;
   },
 
-  // -------------------------------------------------------------
-  // PACKAGES
-  // -------------------------------------------------------------
+  // =============================================================
+  // PACKAGES (Supabase public.packages)
+  // =============================================================
   async getPackages() {
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        const { data, error } = await client.from("packages").select("*").order("price_pkr");
-        if (!error && data && data.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.PACKAGES, JSON.stringify(data));
-          return data;
-        }
-      } catch (e) {
-        console.warn("Supabase getPackages fallback:", e);
-      }
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("packages")
+      .select("*")
+      .order("price_pkr", { ascending: true });
+
+    if (error) {
+      console.error("Supabase Error (getPackages):", error);
+      throw new Error(`Supabase query failed for packages: ${error.message}`);
     }
-    const local = localStorage.getItem(STORAGE_KEYS.PACKAGES);
-    return local ? JSON.parse(local) : window.TEP_DATA.packages;
+    return data || [];
   },
 
   async getPackageById(id) {
-    const list = await this.getPackages();
-    return list.find(p => p.id === id) || null;
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("packages")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) {
+      console.error(`Supabase Error (getPackageById ${id}):`, error);
+      throw new Error(`Failed to load package '${id}' from Supabase: ${error.message}`);
+    }
+    return data;
   },
 
   async savePackage(pkg) {
-    // 1. Update Local Storage
-    const list = await this.getPackages();
-    const idx = list.findIndex(p => p.id === pkg.id);
-    if (idx >= 0) {
-      list[idx] = { ...list[idx], ...pkg };
-    } else {
-      list.push(pkg);
-    }
-    localStorage.setItem(STORAGE_KEYS.PACKAGES, JSON.stringify(list));
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("packages")
+      .upsert(pkg, { onConflict: "id" })
+      .select();
 
-    // 2. Sync to Supabase
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        await client.from("packages").upsert(pkg, { onConflict: "id" });
-      } catch (e) {
-        console.warn("Supabase savePackage error:", e);
-      }
+    if (error) {
+      console.error("Supabase Error (savePackage):", error);
+      throw new Error(`Failed to save package in Supabase: ${error.message}`);
     }
-    return pkg;
+    return data && data[0] ? data[0] : pkg;
   },
 
   async deletePackage(id) {
-    let list = await this.getPackages();
-    list = list.filter(p => p.id !== id);
-    localStorage.setItem(STORAGE_KEYS.PACKAGES, JSON.stringify(list));
+    const client = getClientOrThrow();
+    const { error } = await client
+      .from("packages")
+      .delete()
+      .eq("id", id);
 
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        await client.from("packages").delete().eq("id", id);
-      } catch (e) {
-        console.warn("Supabase deletePackage error:", e);
-      }
+    if (error) {
+      console.error("Supabase Error (deletePackage):", error);
+      throw new Error(`Failed to delete package from Supabase: ${error.message}`);
     }
     return true;
   },
 
-  // -------------------------------------------------------------
-  // BOOKINGS
-  // -------------------------------------------------------------
+  // =============================================================
+  // BOOKINGS (Supabase public.bookings)
+  // =============================================================
   async getBookings() {
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        const { data, error } = await client.from("bookings").select("*").order("created_at", { ascending: false });
-        if (!error && data && data.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(data));
-          return data;
-        }
-      } catch (e) {
-        console.warn("Supabase getBookings fallback:", e);
-      }
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("bookings")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Supabase Error (getBookings):", error);
+      throw new Error(`Supabase query failed for bookings: ${error.message}`);
     }
-    const local = localStorage.getItem(STORAGE_KEYS.BOOKINGS);
-    return local ? JSON.parse(local) : [];
+    return data || [];
   },
 
   async getBookingByRef(ref) {
-    const list = await this.getBookings();
-    return list.find(b => b.booking_reference === ref || b.id === ref) || null;
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("bookings")
+      .select("*")
+      .or(`booking_reference.eq.${ref},id.eq.${ref}`)
+      .maybeSingle();
+
+    if (error) {
+      console.error(`Supabase Error (getBookingByRef ${ref}):`, error);
+      throw new Error(`Failed to load booking from Supabase: ${error.message}`);
+    }
+    return data;
   },
 
   async getUserBookings(email) {
-    const list = await this.getBookings();
-    if (!email) return list;
-    return list.filter(b => b.customer_email && b.customer_email.toLowerCase() === email.toLowerCase());
+    if (!email) return [];
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("bookings")
+      .select("*")
+      .ilike("customer_email", email)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(`Supabase Error (getUserBookings ${email}):`, error);
+      throw new Error(`Failed to load user bookings from Supabase: ${error.message}`);
+    }
+    return data || [];
   },
 
   async saveBooking(bookingData) {
-    // Generate unique reference if missing
+    const client = getClientOrThrow();
+
     if (!bookingData.booking_reference) {
       const rand = Math.floor(1000 + Math.random() * 9000);
       bookingData.booking_reference = `TEP-2026-${rand}`;
     }
-    if (!bookingData.id) {
-      bookingData.id = "bkg-" + Date.now();
-    }
-    bookingData.created_at = bookingData.created_at || new Date().toISOString();
 
-    // 1. Update Local Storage
-    const list = await this.getBookings();
-    const idx = list.findIndex(b => b.booking_reference === bookingData.booking_reference);
-    if (idx >= 0) {
-      list[idx] = { ...list[idx], ...bookingData };
-    } else {
-      list.unshift(bookingData);
-    }
-    localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(list));
+    const { data, error } = await client
+      .from("bookings")
+      .insert([bookingData])
+      .select();
 
-    // 2. Sync to Supabase
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        // Strip or adjust fields if necessary
-        const { data, error } = await client.from("bookings").insert([bookingData]).select();
-        if (error) {
-          console.warn("Supabase booking insert warning:", error);
-        } else if (data && data[0]) {
-          console.log("Booking successfully recorded in Supabase cloud:", data[0].booking_reference);
-        }
-      } catch (e) {
-        console.warn("Supabase saveBooking error:", e);
-      }
+    if (error) {
+      console.error("Supabase Error (saveBooking):", error);
+      throw new Error(`Failed to register booking in Supabase: ${error.message}`);
     }
-    return bookingData;
+    return data && data[0] ? data[0] : bookingData;
   },
 
   async updateBookingStatus(refOrId, status, paymentStatus) {
-    const list = await this.getBookings();
-    const item = list.find(b => b.booking_reference === refOrId || b.id === refOrId);
-    if (!item) return false;
+    const client = getClientOrThrow();
+    const updates = { updated_at: new Date().toISOString() };
+    if (status) updates.booking_status = status;
+    if (paymentStatus) updates.payment_status = paymentStatus;
 
-    if (status) item.booking_status = status;
-    if (paymentStatus) item.payment_status = paymentStatus;
-    item.updated_at = new Date().toISOString();
+    const { data, error } = await client
+      .from("bookings")
+      .update(updates)
+      .or(`booking_reference.eq.${refOrId},id.eq.${refOrId}`)
+      .select();
 
-    localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(list));
-
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        await client.from("bookings")
-          .update({ booking_status: item.booking_status, payment_status: item.payment_status })
-          .or(`booking_reference.eq.${item.booking_reference},id.eq.${item.id}`);
-      } catch (e) {
-        console.warn("Supabase updateBookingStatus error:", e);
-      }
+    if (error) {
+      console.error(`Supabase Error (updateBookingStatus ${refOrId}):`, error);
+      throw new Error(`Failed to update booking in Supabase: ${error.message}`);
     }
-    return item;
+    return data && data[0] ? data[0] : null;
   },
 
   async deleteBooking(refOrId) {
-    let list = await this.getBookings();
-    const item = list.find(b => b.booking_reference === refOrId || b.id === refOrId);
-    list = list.filter(b => b.booking_reference !== refOrId && b.id !== refOrId);
-    localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(list));
+    const client = getClientOrThrow();
+    const { error } = await client
+      .from("bookings")
+      .delete()
+      .or(`booking_reference.eq.${refOrId},id.eq.${refOrId}`);
 
-    const client = getSupabaseClient();
-    if (client && item) {
-      try {
-        await client.from("bookings").delete().or(`booking_reference.eq.${item.booking_reference},id.eq.${item.id}`);
-      } catch (e) {
-        console.warn("Supabase deleteBooking error:", e);
-      }
+    if (error) {
+      console.error(`Supabase Error (deleteBooking ${refOrId}):`, error);
+      throw new Error(`Failed to delete booking from Supabase: ${error.message}`);
     }
     return true;
   },
 
-  // -------------------------------------------------------------
-  // REVIEWS
-  // -------------------------------------------------------------
+  // =============================================================
+  // REVIEWS (Supabase public.reviews)
+  // =============================================================
   async getReviews(targetType = null, targetId = null) {
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        let query = client.from("reviews").select("*").order("created_at", { ascending: false });
-        if (targetType) query = query.eq("target_type", targetType);
-        if (targetId) query = query.eq("target_id", targetId);
-        const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          return data;
-        }
-      } catch (e) {
-        console.warn("Supabase getReviews fallback:", e);
-      }
-    }
+    const client = getClientOrThrow();
+    let query = client
+      .from("reviews")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    const local = localStorage.getItem(STORAGE_KEYS.REVIEWS);
-    let list = local ? JSON.parse(local) : window.TEP_DATA.reviews;
-    if (targetType) list = list.filter(r => r.target_type === targetType);
-    if (targetId) list = list.filter(r => r.target_id === targetId);
-    return list;
+    if (targetType) query = query.eq("target_type", targetType);
+    if (targetId) query = query.eq("target_id", targetId);
+
+    const { data, error } = await query;
+    if (error) {
+      console.error("Supabase Error (getReviews):", error);
+      throw new Error(`Supabase query failed for reviews: ${error.message}`);
+    }
+    return data || [];
   },
 
   async addReview(review) {
-    review.id = review.id || "rev-" + Date.now();
-    review.created_at = review.created_at || new Date().toISOString();
-    review.verified = true;
+    const client = getClientOrThrow();
+    const { data, error } = await client
+      .from("reviews")
+      .insert([review])
+      .select();
 
-    // 1. Local
-    const local = localStorage.getItem(STORAGE_KEYS.REVIEWS);
-    const list = local ? JSON.parse(local) : window.TEP_DATA.reviews;
-    list.unshift(review);
-    localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(list));
-
-    // 2. Supabase
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        await client.from("reviews").insert([review]);
-      } catch (e) {
-        console.warn("Supabase addReview error:", e);
-      }
+    if (error) {
+      console.error("Supabase Error (addReview):", error);
+      throw new Error(`Failed to save review in Supabase: ${error.message}`);
     }
-    return review;
+    return data && data[0] ? data[0] : review;
   },
 
   async deleteReview(id) {
-    const local = localStorage.getItem(STORAGE_KEYS.REVIEWS);
-    let list = local ? JSON.parse(local) : window.TEP_DATA.reviews;
-    list = list.filter(r => r.id !== id);
-    localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(list));
+    const client = getClientOrThrow();
+    const { error } = await client
+      .from("reviews")
+      .delete()
+      .eq("id", id);
 
-    const client = getSupabaseClient();
-    if (client) {
-      try {
-        await client.from("reviews").delete().eq("id", id);
-      } catch (e) {
-        console.warn("Supabase deleteReview error:", e);
-      }
+    if (error) {
+      console.error("Supabase Error (deleteReview):", error);
+      throw new Error(`Failed to delete review from Supabase: ${error.message}`);
     }
     return true;
   },
 
-  // -------------------------------------------------------------
-  // ANALYTICS & STATS
-  // -------------------------------------------------------------
+  // =============================================================
+  // LIVE ANALYTICS (Aggregated directly from Supabase tables)
+  // =============================================================
   async getDashboardStats() {
-    const bookings = await this.getBookings();
-    const destinations = await this.getDestinations();
-    const packages = await this.getPackages();
-    const reviews = await this.getReviews();
+    const client = getClientOrThrow();
 
+    const [bkgRes, destRes, pkgRes, revRes] = await Promise.all([
+      client.from("bookings").select("total_pkr, booking_status"),
+      client.from("destinations").select("id", { count: "exact" }),
+      client.from("packages").select("id", { count: "exact" }),
+      client.from("reviews").select("rating")
+    ]);
+
+    if (bkgRes.error) throw new Error(`Supabase stats bookings error: ${bkgRes.error.message}`);
+    if (destRes.error) throw new Error(`Supabase stats destinations error: ${destRes.error.message}`);
+    if (pkgRes.error) throw new Error(`Supabase stats packages error: ${pkgRes.error.message}`);
+    if (revRes.error) throw new Error(`Supabase stats reviews error: ${revRes.error.message}`);
+
+    const bookings = bkgRes.data || [];
     const totalBookings = bookings.length;
     const confirmedBookings = bookings.filter(b => b.booking_status === "Confirmed").length;
     const pendingBookings = bookings.filter(b => b.booking_status === "Pending").length;
@@ -409,8 +309,9 @@ const TEP_DB = {
       .filter(b => b.booking_status !== "Cancelled")
       .reduce((sum, b) => sum + (Number(b.total_pkr) || 0), 0);
 
+    const reviews = revRes.data || [];
     const avgRating = reviews.length > 0 
-      ? (reviews.reduce((sum, r) => sum + (Number(r.rating) || 5), 0) / reviews.length).toFixed(1) 
+      ? (reviews.reduce((sum, r) => sum + (Number(r.rating) || 5), 0) / reviews.length).toFixed(1)
       : "4.9";
 
     return {
@@ -418,8 +319,8 @@ const TEP_DB = {
       confirmedBookings,
       pendingBookings,
       totalRevenuePkr,
-      destinationsCount: destinations.length,
-      packagesCount: packages.length,
+      destinationsCount: destRes.count || destRes.data?.length || 0,
+      packagesCount: pkgRes.count || pkgRes.data?.length || 0,
       reviewsCount: reviews.length,
       avgRating
     };

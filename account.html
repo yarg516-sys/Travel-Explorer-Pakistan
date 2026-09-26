@@ -258,7 +258,6 @@
     </div>
   </footer>
 
-  <script src="js/data.js"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/db.js"></script>
   <script src="js/auth.js"></script>
@@ -304,21 +303,22 @@
       }
 
       async function renderUserBookings() {
-        const bookings = await TEP_DB.getUserBookings(currentUser.email);
-        document.getElementById("user-bookings-count").innerText = bookings.length;
-
         const listContainer = document.getElementById("user-bookings-list");
-        if (bookings.length === 0) {
-          listContainer.innerHTML = `
-            <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: var(--radius-lg); padding: 3rem; text-align: center;">
-              <i class="fa-solid fa-ticket-simple" style="font-size: 3rem; color: var(--slate-300); margin-bottom: 1rem;"></i>
-              <h3 style="margin-bottom: 0.5rem;">No Bookings Found</h3>
-              <p class="text-muted" style="margin-bottom: 1.5rem;">You haven't reserved any travel packages yet.</p>
-              <a href="packages.html" class="btn btn-primary"><i class="fa-solid fa-compass"></i> Explore Tour Packages</a>
-            </div>
-          `;
-          return;
-        }
+        try {
+          const bookings = await TEP_DB.getUserBookings(currentUser.email);
+          document.getElementById("user-bookings-count").innerText = bookings.length;
+
+          if (bookings.length === 0) {
+            listContainer.innerHTML = `
+              <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: var(--radius-lg); padding: 3rem; text-align: center;">
+                <i class="fa-solid fa-ticket-simple" style="font-size: 3rem; color: var(--slate-300); margin-bottom: 1rem;"></i>
+                <h3 style="margin-bottom: 0.5rem;">No Bookings Found in Database</h3>
+                <p class="text-muted" style="margin-bottom: 1.5rem;">You haven't reserved any travel packages yet.</p>
+                <a href="packages.html" class="btn btn-primary"><i class="fa-solid fa-compass"></i> Explore Tour Packages</a>
+              </div>
+            `;
+            return;
+          }
 
         listContainer.innerHTML = bookings.map(b => {
           const statusBadge = b.booking_status === "Confirmed" ? "badge-success" : (b.booking_status === "Cancelled" ? "badge-admin" : "badge-warning");
@@ -350,6 +350,10 @@
             </div>
           `;
         }).join("");
+        } catch (err) {
+          console.error("Supabase Error loading user bookings:", err);
+          listContainer.innerHTML = `<div style="background: #fee2e2; color: #991b1b; padding: 2rem; border-radius: var(--radius-lg); text-align: center;"><strong>Database Error:</strong> ${err.message}</div>`;
+        }
       }
 
       window.viewBookingDetails = async function(ref) {

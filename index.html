@@ -473,110 +473,142 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/data.js"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/db.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/main.js"></script>
   <script>
-    // Populate Home Page Content
+    // Populate Home Page Content directly from Supabase
     document.addEventListener("DOMContentLoaded", async () => {
-      // 1. Render Featured Destinations (Top 6)
-      const destinations = await TEP_DB.getDestinations();
+      // 1. Render Featured Destinations from Supabase public.destinations
       const destContainer = document.getElementById("home-destinations-container");
-      if (destContainer && destinations) {
-        destContainer.innerHTML = destinations.slice(0, 6).map(d => `
-          <div class="dest-card">
-            <div class="dest-card-image-wrap">
-              <img src="${d.image_url}" alt="${d.name}" class="dest-card-img" loading="lazy">
-              <span class="dest-badge-province">${d.province}</span>
-              <div class="dest-rating">
-                <i class="fa-solid fa-star text-accent"></i> ${d.rating || '4.9'}
-              </div>
-            </div>
-            <div class="dest-card-body">
-              <h3 class="dest-card-title">${d.name}</h3>
-              <p class="dest-card-tagline">${d.tagline || d.province}</p>
-              <p class="dest-card-desc">${d.description}</p>
-              
-              <div class="dest-meta-pills">
-                <span class="dest-meta-pill"><i class="fa-solid fa-mountain"></i> ${d.altitude || 'High Altitude'}</span>
-                <span class="dest-meta-pill"><i class="fa-regular fa-calendar-check"></i> ${d.best_time.split('(')[0]}</span>
-              </div>
+      try {
+        const destinations = await TEP_DB.getDestinations();
+        if (destContainer) {
+          if (!destinations || destinations.length === 0) {
+            destContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--white); border-radius: var(--radius-lg);"><p class="text-muted">No destinations found in Supabase database.</p></div>`;
+          } else {
+            destContainer.innerHTML = destinations.slice(0, 6).map(d => `
+              <div class="dest-card">
+                <div class="dest-card-image-wrap">
+                  <img src="${d.image_url}" alt="${d.name}" class="dest-card-img" loading="lazy">
+                  <span class="dest-badge-province">${d.province}</span>
+                  <div class="dest-rating">
+                    <i class="fa-solid fa-star text-accent"></i> ${d.rating || '4.9'}
+                  </div>
+                </div>
+                <div class="dest-card-body">
+                  <h3 class="dest-card-title">${d.name}</h3>
+                  <p class="dest-card-tagline">${d.tagline || d.province}</p>
+                  <p class="dest-card-desc">${d.description}</p>
+                  
+                  <div class="dest-meta-pills">
+                    <span class="dest-meta-pill"><i class="fa-solid fa-mountain"></i> ${d.altitude || 'High Altitude'}</span>
+                    <span class="dest-meta-pill"><i class="fa-regular fa-calendar-check"></i> ${d.best_time ? d.best_time.split('(')[0] : 'Year-round'}</span>
+                  </div>
 
-              <div class="dest-card-footer">
-                <div class="dest-price-box">
-                  <span class="dest-price-label">Est. Budget From</span>
-                  <span class="dest-price-val">PKR ${d.estimated_cost?.budget_pkr?.toLocaleString() || '25,000'}</span>
-                </div>
-                <div style="display: flex; gap: 0.5rem;">
-                  <button onclick="openDestinationModal('${d.id}')" class="btn btn-outline btn-sm">
-                    <i class="fa-regular fa-eye"></i> Details
-                  </button>
-                  <a href="packages.html?dest=${encodeURIComponent(d.id)}" class="btn btn-primary btn-sm">
-                    <i class="fa-solid fa-compass"></i> Tours
-                  </a>
+                  <div class="dest-card-footer">
+                    <div class="dest-price-box">
+                      <span class="dest-price-label">Est. Budget From</span>
+                      <span class="dest-price-val">PKR ${d.estimated_cost?.budget_pkr?.toLocaleString() || '25,000'}</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                      <button onclick="openDestinationModal('${d.id}')" class="btn btn-outline btn-sm">
+                        <i class="fa-regular fa-eye"></i> Details
+                      </button>
+                      <a href="packages.html?dest=${encodeURIComponent(d.id)}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-compass"></i> Tours
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        `).join("");
+            `).join("");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load destinations from Supabase:", err);
+        if (destContainer) {
+          destContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; background: #fee2e2; color: #991b1b; border-radius: var(--radius-lg);"><strong>Database Error:</strong> ${err.message}</div>`;
+        }
       }
 
-      // 2. Render Featured Tour Packages (Top 3)
-      const packages = await TEP_DB.getPackages();
+      // 2. Render Featured Tour Packages from Supabase public.packages
       const pkgContainer = document.getElementById("home-packages-container");
-      if (pkgContainer && packages) {
-        pkgContainer.innerHTML = packages.slice(0, 3).map(p => `
-          <div class="pkg-card">
-            <div class="pkg-card-img-wrap">
-              <img src="${p.image_url}" alt="${p.title}" class="pkg-card-img" loading="lazy">
-              ${p.discount_percentage ? `<span class="pkg-discount-ribbon">${p.discount_percentage}% OFF</span>` : ''}
-              <span class="pkg-duration-pill"><i class="fa-regular fa-clock"></i> ${p.duration}</span>
-            </div>
-            <div class="pkg-card-body">
-              <div class="pkg-location-row">
-                <span><i class="fa-solid fa-location-dot text-primary"></i> ${p.destination_name}</span>
-                <span style="font-weight: 700; color: var(--accent);"><i class="fa-solid fa-star"></i> ${p.rating || '4.9'} (${p.reviews_count || 30})</span>
-              </div>
-              <h3 class="pkg-card-title">${p.title}</h3>
-              <ul class="pkg-features-list">
-                ${p.included_services.slice(0, 3).map(s => `<li><i class="fa-solid fa-circle-check"></i> ${s}</li>`).join("")}
-              </ul>
-              <div class="pkg-card-footer">
-                <div class="pkg-price-group">
-                  <span class="pkg-price-amount">PKR ${p.price_pkr.toLocaleString()}</span>
-                  <span class="pkg-price-usd">Approx. $${p.price_usd} USD / person</span>
+      try {
+        const packages = await TEP_DB.getPackages();
+        if (pkgContainer) {
+          if (!packages || packages.length === 0) {
+            pkgContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--white); border-radius: var(--radius-lg);"><p class="text-muted">No tour packages found in Supabase database.</p></div>`;
+          } else {
+            pkgContainer.innerHTML = packages.slice(0, 3).map(p => `
+              <div class="pkg-card">
+                <div class="pkg-card-img-wrap">
+                  <img src="${p.image_url}" alt="${p.title}" class="pkg-card-img" loading="lazy">
+                  ${p.discount_percentage ? `<span class="pkg-discount-ribbon">${p.discount_percentage}% OFF</span>` : ''}
+                  <span class="pkg-duration-pill"><i class="fa-regular fa-clock"></i> ${p.duration}</span>
                 </div>
-                <div style="display: flex; gap: 0.5rem;">
-                  <a href="package-details.html?id=${p.id}" class="btn btn-outline btn-sm">Itinerary</a>
-                  <a href="booking.html?pkg=${p.id}" class="btn btn-primary btn-sm">Book</a>
+                <div class="pkg-card-body">
+                  <div class="pkg-location-row">
+                    <span><i class="fa-solid fa-location-dot text-primary"></i> ${p.destination_name}</span>
+                    <span style="font-weight: 700; color: var(--accent);"><i class="fa-solid fa-star"></i> ${p.rating || '4.9'} (${p.reviews_count || 30})</span>
+                  </div>
+                  <h3 class="pkg-card-title">${p.title}</h3>
+                  <ul class="pkg-features-list">
+                    ${(p.included_services || []).slice(0, 3).map(s => `<li><i class="fa-solid fa-circle-check"></i> ${s}</li>`).join("")}
+                  </ul>
+                  <div class="pkg-card-footer">
+                    <div class="pkg-price-group">
+                      <span class="pkg-price-amount">PKR ${Number(p.price_pkr).toLocaleString()}</span>
+                      <span class="pkg-price-usd">Approx. $${p.price_usd} USD / person</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                      <a href="package-details.html?id=${p.id}" class="btn btn-outline btn-sm">Itinerary</a>
+                      <a href="booking.html?pkg=${p.id}" class="btn btn-primary btn-sm">Book</a>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        `).join("");
+            `).join("");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load packages from Supabase:", err);
+        if (pkgContainer) {
+          pkgContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; background: #fee2e2; color: #991b1b; border-radius: var(--radius-lg);"><strong>Database Error:</strong> ${err.message}</div>`;
+        }
       }
 
-      // 3. Render Reviews
-      const reviews = await TEP_DB.getReviews();
+      // 3. Render Reviews from Supabase public.reviews
       const revContainer = document.getElementById("home-reviews-container");
-      if (revContainer && reviews) {
-        revContainer.innerHTML = reviews.slice(0, 3).map(r => `
-          <div class="review-card">
-            <div class="review-stars">
-              ${'<i class="fa-solid fa-star"></i>'.repeat(r.rating)}
-            </div>
-            <p class="review-text">"${r.comment}"</p>
-            <div class="reviewer-profile">
-              <div class="reviewer-avatar">${r.reviewer_name.substring(0, 2).toUpperCase()}</div>
-              <div>
-                <h4 class="reviewer-name">${r.reviewer_name}</h4>
-                <span class="reviewer-trip"><i class="fa-solid fa-badge-check text-success"></i> Verified Traveler &bull; ${r.trip_date || '2026'}</span>
+      try {
+        const reviews = await TEP_DB.getReviews();
+        if (revContainer) {
+          if (!reviews || reviews.length === 0) {
+            revContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2rem;"><p class="text-muted">No reviews recorded in Supabase yet.</p></div>`;
+          } else {
+            revContainer.innerHTML = reviews.slice(0, 3).map(r => `
+              <div class="review-card">
+                <div class="review-stars">
+                  ${'<i class="fa-solid fa-star"></i>'.repeat(r.rating || 5)}
+                </div>
+                <p class="review-text">"${r.comment}"</p>
+                <div class="reviewer-profile">
+                  <div class="reviewer-avatar">${(r.reviewer_name || 'G').substring(0, 2).toUpperCase()}</div>
+                  <div>
+                    <h4 class="reviewer-name">${r.reviewer_name}</h4>
+                    <span class="reviewer-trip"><i class="fa-solid fa-badge-check text-success"></i> Verified Traveler &bull; ${r.trip_date || '2026'}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        `).join("");
+            `).join("");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load reviews from Supabase:", err);
+        if (revContainer) {
+          revContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; background: #fee2e2; color: #991b1b; border-radius: var(--radius-lg);"><strong>Database Error:</strong> ${err.message}</div>`;
+        }
       }
     });
   </script>

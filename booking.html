@@ -429,14 +429,20 @@
     </div>
   </footer>
 
-  <script src="js/data.js"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/db.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/main.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
-      const allPackages = await TEP_DB.getPackages();
+      let allPackages = [];
+      try {
+        allPackages = await TEP_DB.getPackages();
+      } catch (err) {
+        console.error("Supabase Error loading packages for booking:", err);
+        showToast("Error loading packages from Supabase: " + err.message, "error");
+        return;
+      }
 
       // Check current user to prefill
       const currentUser = TEP_AUTH.getCurrentUser();
@@ -448,8 +454,12 @@
 
       // Populate Packages Dropdown
       const pkgSelect = document.getElementById("book-package-select");
+      if (!allPackages || allPackages.length === 0) {
+        pkgSelect.innerHTML = `<option value="">No packages available in Supabase database</option>`;
+        return;
+      }
       pkgSelect.innerHTML = allPackages.map(p => `
-        <option value="${p.id}">${p.title} - PKR ${p.price_pkr.toLocaleString()} (${p.duration})</option>
+        <option value="${p.id}">${p.title} - PKR ${Number(p.price_pkr).toLocaleString()} (${p.duration})</option>
       `).join("");
 
       // Read URL Params
@@ -614,8 +624,15 @@
           user_id: currentUser ? currentUser.id : null
         };
 
-        // Save into DB & Supabase
-        await TEP_DB.saveBooking(bookingData);
+        // Save into Supabase public.bookings
+        try {
+          await TEP_DB.saveBooking(bookingData);
+        } catch (saveErr) {
+          console.error("Supabase Booking Error:", saveErr);
+          showToast(`Database Error: ${saveErr.message}`, "error");
+          alert(`Could not save booking in Supabase: ${saveErr.message}`);
+          return;
+        }
 
         // Fill receipt
         document.getElementById("receipt-ref").innerText = bookingData.booking_reference;
@@ -633,7 +650,7 @@
         node3.className = "step-node completed";
         node4.className = "step-node completed";
 
-        showToast("Booking successfully registered and synced with Supabase cloud!", "success");
+        showToast("Booking successfully registered and stored in Supabase cloud!", "success");
       });
     });
   </script>

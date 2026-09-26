@@ -287,7 +287,6 @@
     </div>
   </footer>
 
-  <script src="js/data.js"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/db.js"></script>
   <script src="js/auth.js"></script>
@@ -295,11 +294,32 @@
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      let pkgId = urlParams.get("id") || "pkg-hunza-expedition";
+      let pkgId = urlParams.get("id");
 
-      let pkg = await TEP_DB.getPackageById(pkgId);
+      let pkg = null;
+      try {
+        if (pkgId) {
+          pkg = await TEP_DB.getPackageById(pkgId);
+        }
+        if (!pkg) {
+          const all = await TEP_DB.getPackages();
+          if (all && all.length > 0) pkg = all[0];
+        }
+      } catch (err) {
+        console.error("Supabase Error on package-details:", err);
+        const grid = document.getElementById("pkg-layout-grid");
+        if (grid) {
+          grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: #fee2e2; color: #991b1b; border-radius: var(--radius-lg);"><h3>Database Error Loading Package</h3><p>${err.message}</p></div>`;
+        }
+        return;
+      }
+
       if (!pkg) {
-        pkg = (await TEP_DB.getPackages())[0];
+        const grid = document.getElementById("pkg-layout-grid");
+        if (grid) {
+          grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--white); border-radius: var(--radius-lg);"><h3>Package Not Found</h3><p class="text-muted">The requested tour package was not found in Supabase.</p><a href="packages.html" class="btn btn-primary" style="margin-top: 1rem;">Back to Packages</a></div>`;
+        }
+        return;
       }
 
       // Populate Page Data
