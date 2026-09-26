@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Your Tour | Travel Explorer Pakistan</title>
+  <meta name="description" content="Complete your tour package booking across Pakistan. Instant confirmation with live Supabase database sync.">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+    .step-indicator::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--slate-200);
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+    .step-node {
+      position: relative;
+      z-index: 2;
+      background: var(--white);
+      border: 2px solid var(--slate-300);
+      color: var(--slate-500);
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+    .step-node.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: var(--white);
+      box-shadow: 0 0 0 4px var(--primary-subtle);
+    }
+    .step-node.completed {
+      border-color: var(--success);
+      background: var(--success);
+      color: var(--white);
+    }
+    .step-title {
+      position: absolute;
+      top: calc(100% + 0.4rem);
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      color: var(--slate-600);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-symbol"><i class="fa-solid fa-mountain-sun"></i></div>
+        <div class="brand-text">Travel Explorer <span>Pakistan</span></div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="destinations.html" class="nav-link">Destinations</a></li>
+          <li><a href="packages.html" class="nav-link">Tour Packages</a></li>
+          <li><a href="booking.html" class="nav-link active">Trip Booking</a></li>
+          <li><a href="account.html" class="nav-link">My Account</a></li>
+          <li><a href="admin.html" class="nav-link text-primary"><i class="fa-solid fa-shield-halved"></i> Admin</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div id="nav-auth-container"></div>
+        <button class="mobile-toggle" aria-label="Toggle Menu"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" style="padding-top: 3rem;">
+      <div class="container container-narrow">
+        
+        <!-- Header -->
+        <div class="section-header" style="margin-bottom: 2.5rem;">
+          <span class="section-badge"><i class="fa-solid fa-shield-check text-success"></i> SECURE ONLINE RESERVATION</span>
+          <h1 class="section-title">Tour Package Booking Engine</h1>
+          <p class="section-subtitle">
+            Lock in your adventure across Pakistan. Instant reference code generation and cloud sync with Supabase.
+          </p>
+        </div>
+
+        <!-- 4-Step Indicator -->
+        <div class="step-indicator" id="booking-steps">
+          <div style="position: relative; text-align: center;">
+            <div class="step-node active" id="node-1">1</div>
+            <span class="step-title">Select Tour</span>
+          </div>
+          <div style="position: relative; text-align: center;">
+            <div class="step-node" id="node-2">2</div>
+            <span class="step-title">Traveler Info</span>
+          </div>
+          <div style="position: relative; text-align: center;">
+            <div class="step-node" id="node-3">3</div>
+            <span class="step-title">Add-ons & Pay</span>
+          </div>
+          <div style="position: relative; text-align: center;">
+            <div class="step-node" id="node-4">4</div>
+            <span class="step-title">Confirmation</span>
+          </div>
+        </div>
+
+        <!-- Main Booking Card -->
+        <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: var(--radius-xl); padding: 2.5rem; box-shadow: var(--shadow-lg);">
+          
+          <form id="multi-step-booking-form">
+            
+            <!-- STEP 1: Tour Selection & Travelers -->
+            <div id="step-1-content">
+              <h3 style="font-size: 1.35rem; margin-bottom: 1.5rem; color: var(--slate-900);">
+                <i class="fa-solid fa-compass text-primary"></i> Step 1: Choose Tour Package & Dates
+              </h3>
+
+              <div class="form-group">
+                <label class="form-label" for="book-package-select">Select Tour Package *</label>
+                <select id="book-package-select" class="form-select" required>
+                  <!-- Populated from data.js -->
+                </select>
+              </div>
+
+              <!-- Selected package preview strip -->
+              <div id="selected-pkg-preview" style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                <img id="preview-img" src="" style="width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius-sm);">
+                <div>
+                  <h4 id="preview-title" style="font-size: 1rem; margin-bottom: 0.2rem;">Title</h4>
+                  <div style="font-size: 0.85rem; color: var(--slate-600);">
+                    <span id="preview-duration"></span> &bull; 
+                    <strong style="color: var(--primary);">PKR <span id="preview-price"></span></strong> / person
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="book-date-select">Departure Date *</label>
+                  <select id="book-date-select" class="form-select" required>
+                    <!-- Dates -->
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="book-city-select">Pickup / Departure City *</label>
+                  <select id="book-city-select" class="form-select">
+                    <option value="Islamabad">Islamabad (Primary Departure Point)</option>
+                    <option value="Lahore">Lahore (Thokar / Airport Pickup)</option>
+                    <option value="Karachi">Karachi (Connecting via Islamabad)</option>
+                    <option value="Peshawar">Peshawar Cantt</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="book-adults-count">Number of Adults (12+ yrs)</label>
+                  <select id="book-adults-count" class="form-select">
+                    <option value="1">1 Adult</option>
+                    <option value="2" selected>2 Adults</option>
+                    <option value="3">3 Adults</option>
+                    <option value="4">4 Adults</option>
+                    <option value="5">5 Adults</option>
+                    <option value="6">6+ Group</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="book-children-count">Children (Under 12 yrs)</label>
+                  <select id="book-children-count" class="form-select">
+                    <option value="0" selected>0 Children</option>
+                    <option value="1">1 Child (30% Discount)</option>
+                    <option value="2">2 Children</option>
+                    <option value="3">3 Children</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-primary" id="btn-to-step-2">
+                  Continue to Traveler Info <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- STEP 2: Customer Contact & Identification -->
+            <div id="step-2-content" style="display: none;">
+              <h3 style="font-size: 1.35rem; margin-bottom: 1.5rem; color: var(--slate-900);">
+                <i class="fa-solid fa-user-shield text-primary"></i> Step 2: Primary Traveler Contact & Details
+              </h3>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="cust-full-name">Full Name (Lead Traveler) *</label>
+                  <input type="text" id="cust-full-name" class="form-control" required placeholder="e.g. Farhan Tariq">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="cust-email">Email Address *</label>
+                  <input type="email" id="cust-email" class="form-control" required placeholder="e.g. farhan@gmail.com">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="cust-phone">Phone / WhatsApp Number *</label>
+                  <input type="tel" id="cust-phone" class="form-control" required placeholder="e.g. +92 300 1234567">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="cust-cnic">CNIC / Passport Number *</label>
+                  <input type="text" id="cust-cnic" class="form-control" required placeholder="e.g. 37405-1234567-1 or Passport No">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="cust-special-requests">Dietary Preferences or Special Requests</label>
+                <textarea id="cust-special-requests" class="form-control" rows="2" placeholder="e.g. Vegetarian food preferences, senior citizen seat requirement, photography stops..."></textarea>
+              </div>
+
+              <div style="display: flex; justify-content: space-between;">
+                <button type="button" class="btn btn-outline" id="btn-back-to-1">
+                  <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-to-step-3">
+                  Continue to Add-ons & Review <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- STEP 3: Add-ons, Payment Method & Summary -->
+            <div id="step-3-content" style="display: none;">
+              <h3 style="font-size: 1.35rem; margin-bottom: 1.5rem; color: var(--slate-900);">
+                <i class="fa-solid fa-credit-card text-primary"></i> Step 3: Add-ons & Payment Preferences
+              </h3>
+
+              <!-- Optional Add-ons -->
+              <div style="margin-bottom: 1.5rem;">
+                <label class="form-label" style="margin-bottom: 0.75rem;">Optional Tour Add-ons</label>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                  <label style="display: flex; align-items: center; justify-content: space-between; background: var(--slate-50); border: 1px solid var(--slate-200); padding: 0.75rem 1rem; border-radius: var(--radius-md); cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                      <input type="checkbox" id="addon-camp" class="addon-checkbox" data-name="Camp & Sleeping Bag Upgrade" data-price="6000">
+                      <div>
+                        <strong>Private Camp & Thermal Sleeping Bag Upgrade</strong>
+                        <div style="font-size: 0.8rem; color: var(--slate-500);">High-altitude thermal insulation tents at base camps</div>
+                      </div>
+                    </div>
+                    <span style="font-weight: 700; color: var(--primary);">+ PKR 6,000</span>
+                  </label>
+
+                  <label style="display: flex; align-items: center; justify-content: space-between; background: var(--slate-50); border: 1px solid var(--slate-200); padding: 0.75rem 1rem; border-radius: var(--radius-md); cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                      <input type="checkbox" id="addon-photo" class="addon-checkbox" data-name="Professional Drone / Photographer" data-price="12000">
+                      <div>
+                        <strong>Professional Drone & DSLR Photography Session</strong>
+                        <div style="font-size: 0.8rem; color: var(--slate-500);">High-res 4K edited reel + 50 edited photos delivered</div>
+                      </div>
+                    </div>
+                    <span style="font-weight: 700; color: var(--primary);">+ PKR 12,000</span>
+                  </label>
+
+                  <label style="display: flex; align-items: center; justify-content: space-between; background: var(--slate-50); border: 1px solid var(--slate-200); padding: 0.75rem 1rem; border-radius: var(--radius-md); cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                      <input type="checkbox" id="addon-vip" class="addon-checkbox" data-name="Airport VIP Pickup & Drop" data-price="5000">
+                      <div>
+                        <strong>Airport VIP Private Chauffeur Pickup & Drop</strong>
+                        <div style="font-size: 0.8rem; color: var(--slate-500);">Direct luxury sedan airport transit in Islamabad</div>
+                      </div>
+                    </div>
+                    <span style="font-weight: 700; color: var(--primary);">+ PKR 5,000</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Payment Method Selection -->
+              <div class="form-group">
+                <label class="form-label" for="book-payment-method">Payment Preference</label>
+                <select id="book-payment-method" class="form-select">
+                  <option value="Cash / Pay on Arrival">Pay on Arrival / Deposit Guarantee (Zero Upfront Card Needed)</option>
+                  <option value="JazzCash / EasyPaisa">JazzCash / EasyPaisa Mobile Account</option>
+                  <option value="Bank Transfer / Raast">Online Bank Transfer / Raast Instant Payment</option>
+                  <option value="Debit / Credit Card">Debit or Credit Card (Visa / Mastercard)</option>
+                </select>
+              </div>
+
+              <!-- Final Price Calculation Summary -->
+              <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h4 style="font-size: 1.05rem; margin-bottom: 1rem; color: var(--slate-900);">Final Price Summary</h4>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.95rem;">
+                  <span id="final-pkg-title">Package Base</span>
+                  <span id="final-pkg-subtotal">PKR 0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.95rem;">
+                  <span>Selected Add-ons</span>
+                  <span id="final-addons-total">PKR 0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.95rem; color: var(--success);">
+                  <span>Permits & Toll Taxes</span>
+                  <span>Included</span>
+                </div>
+
+                <div style="height: 1px; background: var(--slate-200); margin: 0.75rem 0;"></div>
+
+                <div style="display: flex; justify-content: space-between; font-size: 1.35rem; font-weight: 800; color: var(--slate-900);">
+                  <span>Total Amount:</span>
+                  <span style="color: var(--primary);">PKR <span id="final-grand-total">0</span></span>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between;">
+                <button type="button" class="btn btn-outline" id="btn-back-to-2">
+                  <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <button type="submit" class="btn btn-primary btn-lg" id="btn-confirm-booking">
+                  <i class="fa-solid fa-check-circle"></i> Confirm Booking Now
+                </button>
+              </div>
+            </div>
+
+            <!-- STEP 4: Success Confirmation & Invoice View -->
+            <div id="step-4-content" style="display: none; text-align: center;">
+              <div style="width: 70px; height: 70px; background: #d1fae5; color: var(--success); border-radius: var(--radius-full); display: inline-flex; align-items: center; justify-content: center; font-size: 2.25rem; margin-bottom: 1.25rem;">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+
+              <h2 style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--slate-900);">Booking Confirmed!</h2>
+              <p style="color: var(--slate-600); margin-bottom: 1.5rem;">
+                Your reservation has been recorded in the database. A verification message has been prepared for your trip coordinator.
+              </p>
+
+              <!-- Ticket / Receipt Container -->
+              <div id="booking-receipt-card" style="background: var(--slate-50); border: 2px dashed var(--slate-300); border-radius: var(--radius-lg); padding: 2rem; text-align: left; max-width: 650px; margin: 0 auto 2rem; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--slate-200); padding-bottom: 1rem;">
+                  <div>
+                    <span style="font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Booking Reference</span>
+                    <h3 id="receipt-ref" style="font-size: 1.5rem; color: var(--primary);">TEP-2026-0000</h3>
+                  </div>
+                  <div>
+                    <span class="badge badge-success" id="receipt-status">CONFIRMED</span>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; font-size: 0.9rem;">
+                  <div>
+                    <span style="color: var(--slate-400); font-size: 0.8rem; display: block;">Tour Package</span>
+                    <strong id="receipt-pkg-title">Package Name</strong>
+                  </div>
+                  <div>
+                    <span style="color: var(--slate-400); font-size: 0.8rem; display: block;">Departure Date</span>
+                    <strong id="receipt-date">2026-10-10</strong>
+                  </div>
+                  <div>
+                    <span style="color: var(--slate-400); font-size: 0.8rem; display: block;">Lead Traveler</span>
+                    <strong id="receipt-name">Customer Name</strong>
+                  </div>
+                  <div>
+                    <span style="color: var(--slate-400); font-size: 0.8rem; display: block;">Total Travelers</span>
+                    <strong id="receipt-travelers">2 Persons</strong>
+                  </div>
+                  <div>
+                    <span style="color: var(--slate-400); font-size: 0.8rem; display: block;">Departure City</span>
+                    <strong id="receipt-city">Islamabad</strong>
+                  </div>
+                  <div>
+                    <span style="color: var(--slate-400); font-size: 0.8rem; display: block;">Payment Mode</span>
+                    <strong id="receipt-payment">Pay on Arrival</strong>
+                  </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--slate-200); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-weight: 700; color: var(--slate-800);">Total Price:</span>
+                  <span style="font-size: 1.4rem; font-weight: 800; color: var(--primary);" id="receipt-total">PKR 0</span>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-outline" onclick="window.print()">
+                  <i class="fa-solid fa-print"></i> Print Ticket / Invoice
+                </button>
+                <a href="account.html" class="btn btn-primary">
+                  <i class="fa-solid fa-user-circle"></i> View in My Bookings
+                </a>
+              </div>
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Travel Explorer Pakistan. All rights reserved.</p>
+        <div>
+          <span id="footer-supabase-status" class="backend-status-badge">
+            <i class="fa-solid fa-spinner fa-spin"></i> Checking Supabase Backend...
+          </span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const allPackages = await TEP_DB.getPackages();
+
+      // Check current user to prefill
+      const currentUser = TEP_AUTH.getCurrentUser();
+      if (currentUser) {
+        if (document.getElementById("cust-full-name")) document.getElementById("cust-full-name").value = currentUser.name || "";
+        if (document.getElementById("cust-email")) document.getElementById("cust-email").value = currentUser.email || "";
+        if (document.getElementById("cust-phone")) document.getElementById("cust-phone").value = currentUser.phone || "";
+      }
+
+      // Populate Packages Dropdown
+      const pkgSelect = document.getElementById("book-package-select");
+      pkgSelect.innerHTML = allPackages.map(p => `
+        <option value="${p.id}">${p.title} - PKR ${p.price_pkr.toLocaleString()} (${p.duration})</option>
+      `).join("");
+
+      // Read URL Params
+      const urlParams = new URLSearchParams(window.location.search);
+      const prePkg = urlParams.get("pkg");
+      const preDate = urlParams.get("date");
+      const preCity = urlParams.get("city");
+      const preAdults = urlParams.get("adults");
+      const preChildren = urlParams.get("children");
+
+      if (prePkg && allPackages.some(p => p.id === prePkg)) {
+        pkgSelect.value = prePkg;
+      }
+      if (preCity) document.getElementById("book-city-select").value = preCity;
+      if (preAdults) document.getElementById("book-adults-count").value = preAdults;
+      if (preChildren) document.getElementById("book-children-count").value = preChildren;
+
+      let selectedPkg = allPackages.find(p => p.id === pkgSelect.value) || allPackages[0];
+
+      function updatePkgPreview() {
+        selectedPkg = allPackages.find(p => p.id === pkgSelect.value) || allPackages[0];
+        document.getElementById("preview-img").src = selectedPkg.image_url;
+        document.getElementById("preview-title").innerText = selectedPkg.title;
+        document.getElementById("preview-duration").innerText = selectedPkg.duration;
+        document.getElementById("preview-price").innerText = selectedPkg.price_pkr.toLocaleString();
+
+        const dateSelect = document.getElementById("book-date-select");
+        dateSelect.innerHTML = selectedPkg.available_dates.map(d => `<option value="${d}">${d}</option>`).join("");
+        if (preDate && selectedPkg.available_dates.includes(preDate)) {
+          dateSelect.value = preDate;
+        }
+
+        recalculateTotals();
+      }
+
+      pkgSelect.addEventListener("change", updatePkgPreview);
+      updatePkgPreview();
+
+      function recalculateTotals() {
+        const adults = parseInt(document.getElementById("book-adults-count").value, 10);
+        const children = parseInt(document.getElementById("book-children-count").value, 10);
+        const adultPrice = selectedPkg.price_pkr;
+        const childPrice = Math.round(selectedPkg.price_pkr * 0.7);
+
+        const subtotal = (adults * adultPrice) + (children * childPrice);
+
+        let addonsTotal = 0;
+        document.querySelectorAll(".addon-checkbox:checked").forEach(cb => {
+          addonsTotal += parseInt(cb.getAttribute("data-price"), 10);
+        });
+
+        const grandTotal = subtotal + addonsTotal;
+
+        document.getElementById("final-pkg-title").innerText = `${selectedPkg.title} (${adults} Adult${adults>1?'s':''}${children>0?`, ${children} Child`:''})`;
+        document.getElementById("final-pkg-subtotal").innerText = `PKR ${subtotal.toLocaleString()}`;
+        document.getElementById("final-addons-total").innerText = `PKR ${addonsTotal.toLocaleString()}`;
+        document.getElementById("final-grand-total").innerText = grandTotal.toLocaleString();
+
+        return { subtotal, addonsTotal, grandTotal, adults, children };
+      }
+
+      document.getElementById("book-adults-count").addEventListener("change", recalculateTotals);
+      document.getElementById("book-children-count").addEventListener("change", recalculateTotals);
+      document.querySelectorAll(".addon-checkbox").forEach(cb => cb.addEventListener("change", recalculateTotals));
+
+      // Step Navigation Logic
+      const step1 = document.getElementById("step-1-content");
+      const step2 = document.getElementById("step-2-content");
+      const step3 = document.getElementById("step-3-content");
+      const step4 = document.getElementById("step-4-content");
+
+      const node1 = document.getElementById("node-1");
+      const node2 = document.getElementById("node-2");
+      const node3 = document.getElementById("node-3");
+      const node4 = document.getElementById("node-4");
+
+      // 1 -> 2
+      document.getElementById("btn-to-step-2").addEventListener("click", () => {
+        step1.style.display = "none";
+        step2.style.display = "block";
+        node1.className = "step-node completed";
+        node2.className = "step-node active";
+      });
+
+      // 2 -> 1
+      document.getElementById("btn-back-to-1").addEventListener("click", () => {
+        step2.style.display = "none";
+        step1.style.display = "block";
+        node2.className = "step-node";
+        node1.className = "step-node active";
+      });
+
+      // 2 -> 3
+      document.getElementById("btn-to-step-3").addEventListener("click", () => {
+        const name = document.getElementById("cust-full-name").value.trim();
+        const email = document.getElementById("cust-email").value.trim();
+        const phone = document.getElementById("cust-phone").value.trim();
+        const cnic = document.getElementById("cust-cnic").value.trim();
+
+        if (!name || !email || !phone || !cnic) {
+          showToast("Please fill in all required traveler details.", "error");
+          return;
+        }
+
+        recalculateTotals();
+        step2.style.display = "none";
+        step3.style.display = "block";
+        node2.className = "step-node completed";
+        node3.className = "step-node active";
+      });
+
+      // 3 -> 2
+      document.getElementById("btn-back-to-2").addEventListener("click", () => {
+        step3.style.display = "none";
+        step2.style.display = "block";
+        node3.className = "step-node";
+        node2.className = "step-node active";
+      });
+
+      // Submit Final Booking
+      document.getElementById("multi-step-booking-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const calc = recalculateTotals();
+
+        const selectedAddons = [];
+        document.querySelectorAll(".addon-checkbox:checked").forEach(cb => {
+          selectedAddons.push(cb.getAttribute("data-name"));
+        });
+
+        const name = document.getElementById("cust-full-name").value.trim();
+        const email = document.getElementById("cust-email").value.trim();
+        const phone = document.getElementById("cust-phone").value.trim();
+        const cnic = document.getElementById("cust-cnic").value.trim();
+        const requests = document.getElementById("cust-special-requests").value.trim();
+        const departureCity = document.getElementById("book-city-select").value;
+        const departureDate = document.getElementById("book-date-select").value;
+        const paymentMethod = document.getElementById("book-payment-method").value;
+
+        const bookingRef = `TEP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const bookingData = {
+          booking_reference: bookingRef,
+          package_id: selectedPkg.id,
+          package_title: selectedPkg.title,
+          destination_name: selectedPkg.destination_name,
+          travel_date: departureDate,
+          travelers_count: calc.adults + calc.children,
+          travelers_breakdown: { adults: calc.adults, children: calc.children },
+          customer_name: name,
+          customer_email: email,
+          customer_phone: phone,
+          customer_cnic: cnic,
+          departure_city: departureCity,
+          addons: selectedAddons,
+          special_requests: requests,
+          subtotal_pkr: calc.subtotal,
+          addons_pkr: calc.addonsTotal,
+          total_pkr: calc.grandTotal,
+          payment_method: paymentMethod,
+          payment_status: paymentMethod.includes("Pay on Arrival") ? "Pending Deposit" : "Verified",
+          booking_status: "Confirmed",
+          user_id: currentUser ? currentUser.id : null
+        };
+
+        // Save into DB & Supabase
+        await TEP_DB.saveBooking(bookingData);
+
+        // Fill receipt
+        document.getElementById("receipt-ref").innerText = bookingData.booking_reference;
+        document.getElementById("receipt-pkg-title").innerText = bookingData.package_title;
+        document.getElementById("receipt-date").innerText = bookingData.travel_date;
+        document.getElementById("receipt-name").innerText = bookingData.customer_name;
+        document.getElementById("receipt-travelers").innerText = `${calc.adults} Adults${calc.children>0?`, ${calc.children} Children`:''}`;
+        document.getElementById("receipt-city").innerText = bookingData.departure_city;
+        document.getElementById("receipt-payment").innerText = bookingData.payment_method;
+        document.getElementById("receipt-total").innerText = `PKR ${bookingData.total_pkr.toLocaleString()}`;
+
+        // Switch to Step 4
+        step3.style.display = "none";
+        step4.style.display = "block";
+        node3.className = "step-node completed";
+        node4.className = "step-node completed";
+
+        showToast("Booking successfully registered and synced with Supabase cloud!", "success");
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tour Package Details | Travel Explorer Pakistan</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-symbol"><i class="fa-solid fa-mountain-sun"></i></div>
+        <div class="brand-text">Travel Explorer <span>Pakistan</span></div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="destinations.html" class="nav-link">Destinations</a></li>
+          <li><a href="packages.html" class="nav-link active">Tour Packages</a></li>
+          <li><a href="booking.html" class="nav-link">Trip Booking</a></li>
+          <li><a href="account.html" class="nav-link">My Account</a></li>
+          <li><a href="admin.html" class="nav-link text-primary"><i class="fa-solid fa-shield-halved"></i> Admin</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div id="nav-auth-container"></div>
+        <button class="mobile-toggle" aria-label="Toggle Menu"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Breadcrumb & Top Bar -->
+    <div style="background: var(--slate-100); border-bottom: 1px solid var(--slate-200); padding: 0.85rem 0; font-size: 0.85rem;">
+      <div class="container" style="display: flex; gap: 0.5rem; align-items: center; color: var(--slate-600);">
+        <a href="index.html">Home</a> &gt; 
+        <a href="packages.html">Packages</a> &gt; 
+        <span id="breadcrumb-title" style="color: var(--slate-900); font-weight: 600;">Tour Details</span>
+      </div>
+    </div>
+
+    <!-- Package Detail Section -->
+    <section class="section" style="padding-top: 2.5rem;">
+      <div class="container">
+        
+        <!-- Header Row -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap;">
+          <div>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+              <span id="pkg-category-badge" class="badge badge-primary">Mountain Expeditions</span>
+              <span id="pkg-difficulty-badge" class="badge badge-accent">Moderate</span>
+              <span id="pkg-destination-badge" class="badge badge-info"><i class="fa-solid fa-location-dot"></i> Hunza Valley</span>
+            </div>
+            <h1 id="pkg-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">Tour Package Title</h1>
+            <div style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.95rem; color: var(--slate-600);">
+              <span><i class="fa-regular fa-clock text-primary"></i> <strong id="pkg-duration">8 Days / 7 Nights</strong></span>
+              <span><i class="fa-solid fa-user-group text-primary"></i> Group Size: <strong id="pkg-group-size">12 - 16 Travelers</strong></span>
+              <span><i class="fa-solid fa-van-shuttle text-primary"></i> Starts: <strong id="pkg-departure-city">Islamabad</strong></span>
+              <span><i class="fa-solid fa-star text-accent"></i> <strong id="pkg-rating">4.9</strong> (<span id="pkg-reviews-count">54</span> reviews)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Column Layout: Details on Left, Booking Sticky on Right -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; align-items: start;" id="pkg-layout-grid">
+          
+          <!-- LEFT COLUMN: Content -->
+          <div>
+            <!-- Main Hero Image & Gallery -->
+            <div style="margin-bottom: 2.5rem;">
+              <div style="height: 420px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); margin-bottom: 1rem;">
+                <img id="pkg-main-img" src="" alt="Tour Photo" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <div id="pkg-gallery-thumbs" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem;">
+                <!-- Gallery thumbs -->
+              </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2.5rem; box-shadow: var(--shadow-sm);">
+              <h3 style="font-size: 1.4rem; margin-bottom: 1rem;"><i class="fa-solid fa-compass text-primary"></i> Tour Overview</h3>
+              <p id="pkg-overview" style="color: var(--slate-700); font-size: 1.05rem; line-height: 1.7;"></p>
+            </div>
+
+            <!-- Day-by-Day Itinerary -->
+            <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2.5rem; box-shadow: var(--shadow-sm);">
+              <h3 style="font-size: 1.4rem; margin-bottom: 1.5rem;"><i class="fa-solid fa-route text-primary"></i> Day-by-Day Itinerary</h3>
+              <div id="pkg-itinerary-container" style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Itinerary items -->
+              </div>
+            </div>
+
+            <!-- Included & Excluded Services -->
+            <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2.5rem; box-shadow: var(--shadow-sm);">
+              <h3 style="font-size: 1.4rem; margin-bottom: 1.5rem;"><i class="fa-solid fa-list-check text-primary"></i> Services & Inclusions</h3>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                  <h4 style="color: var(--primary); font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-circle-check"></i> What is Included
+                  </h4>
+                  <ul id="pkg-included-list" style="list-style: none; display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.95rem;">
+                    <!-- Inclusions -->
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 style="color: var(--danger); font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-circle-xmark"></i> What is Excluded
+                  </h4>
+                  <ul id="pkg-excluded-list" style="list-style: none; display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.95rem;">
+                    <!-- Exclusions -->
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Customer Reviews Section -->
+            <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2.5rem; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.4rem;"><i class="fa-solid fa-comments text-primary"></i> Traveler Reviews</h3>
+                <button class="btn btn-outline btn-sm" onclick="document.getElementById('review-form-box').scrollIntoView({behavior: 'smooth'})">
+                  <i class="fa-solid fa-pen"></i> Write a Review
+                </button>
+              </div>
+
+              <div id="pkg-reviews-list" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
+                <!-- Populated reviews -->
+              </div>
+
+              <!-- Write a Review Form -->
+              <div id="review-form-box" style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 1.5rem;">
+                <h4 style="font-size: 1.1rem; margin-bottom: 1rem;">Share Your Experience</h4>
+                <form id="pkg-add-review-form">
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="rev-author-name">Your Full Name *</label>
+                      <input type="text" id="rev-author-name" class="form-control" required placeholder="e.g. Asad Qureshi">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="rev-author-email">Email Address *</label>
+                      <input type="email" id="rev-author-email" class="form-control" required placeholder="e.g. asad@gmail.com">
+                    </div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="rev-rating">Trip Rating *</label>
+                      <select id="rev-rating" class="form-select">
+                        <option value="5">⭐⭐⭐⭐⭐ 5 Stars - Exceptional</option>
+                        <option value="4">⭐⭐⭐⭐ 4 Stars - Very Good</option>
+                        <option value="3">⭐⭐⭐ 3 Stars - Average</option>
+                        <option value="2">⭐⭐ 2 Stars - Disappointing</option>
+                        <option value="1">⭐ 1 Star - Poor</option>
+                      </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="rev-trip-date">Trip Date</label>
+                      <input type="text" id="rev-trip-date" class="form-control" placeholder="e.g. September 2026">
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="rev-comment">Your Review / Comments *</label>
+                    <textarea id="rev-comment" class="form-control" rows="3" required placeholder="Describe your experience with the transportation, guide, hotels, and highlights..."></textarea>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-paper-plane"></i> Submit Verified Review
+                  </button>
+                </form>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: Sticky Booking Widget -->
+          <div style="position: sticky; top: 6rem;">
+            <div style="background: var(--white); border: 2px solid var(--primary-light); border-radius: var(--radius-xl); padding: 2rem; box-shadow: var(--shadow-xl);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+                <div>
+                  <span style="font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Standard Package</span>
+                  <div style="font-size: 2rem; font-weight: 800; color: var(--primary);">
+                    PKR <span id="widget-price-pkr">85,000</span>
+                  </div>
+                  <span style="font-size: 0.85rem; color: var(--slate-500);">Per person (~$<span id="widget-price-usd">305</span> USD)</span>
+                </div>
+                <div id="widget-discount-badge" class="badge badge-accent">15% OFF</div>
+              </div>
+
+              <!-- Interactive Booking Calculator Form -->
+              <form id="widget-booking-form">
+                <!-- Departure Date -->
+                <div class="form-group">
+                  <label class="form-label" for="widget-date"><i class="fa-regular fa-calendar-check text-primary"></i> Select Departure Date</label>
+                  <select id="widget-date" class="form-select" required>
+                    <!-- Dates populated dynamically -->
+                  </select>
+                </div>
+
+                <!-- Pickup City -->
+                <div class="form-group">
+                  <label class="form-label" for="widget-city"><i class="fa-solid fa-location-arrow text-primary"></i> Departure / Pickup City</label>
+                  <select id="widget-city" class="form-select">
+                    <option value="Islamabad">Islamabad (Primary Hub)</option>
+                    <option value="Lahore">Lahore (Thokar / Airport)</option>
+                    <option value="Karachi">Karachi (Fly to Islamabad)</option>
+                    <option value="Peshawar">Peshawar Cantt</option>
+                  </select>
+                </div>
+
+                <!-- Travelers -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="widget-adults">Adults</label>
+                    <select id="widget-adults" class="form-select">
+                      <option value="1">1 Person</option>
+                      <option value="2" selected>2 Persons</option>
+                      <option value="3">3 Persons</option>
+                      <option value="4">4 Persons</option>
+                      <option value="5">5+ Persons</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="widget-children">Children (&lt;10y)</label>
+                    <select id="widget-children" class="form-select">
+                      <option value="0" selected>0</option>
+                      <option value="1">1 Child (-30%)</option>
+                      <option value="2">2 Children</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Live Price Breakdown -->
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                    <span>Base Fare (<span id="calc-travelers-label">2 Adults</span>):</span>
+                    <strong>PKR <span id="calc-subtotal">170,000</span></strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--success);">
+                    <span>Govt Tourism Taxes & Permits:</span>
+                    <span>Included</span>
+                  </div>
+                  <div style="height: 1px; background: var(--slate-200); margin: 0.5rem 0;"></div>
+                  <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 800; color: var(--slate-900);">
+                    <span>Total Payable:</span>
+                    <span style="color: var(--primary);">PKR <span id="calc-total">170,000</span></span>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-bottom: 0.75rem;">
+                  <i class="fa-solid fa-lock"></i> Reserve This Tour
+                </button>
+              </form>
+
+              <div style="text-align: center; font-size: 0.8rem; color: var(--slate-400);">
+                <i class="fa-solid fa-shield-halved text-success"></i> Free cancellation up to 7 days before departure.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Travel Explorer Pakistan. All rights reserved.</p>
+        <div>
+          <span id="footer-supabase-status" class="backend-status-badge">
+            <i class="fa-solid fa-spinner fa-spin"></i> Checking Supabase Backend...
+          </span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      let pkgId = urlParams.get("id") || "pkg-hunza-expedition";
+
+      let pkg = await TEP_DB.getPackageById(pkgId);
+      if (!pkg) {
+        pkg = (await TEP_DB.getPackages())[0];
+      }
+
+      // Populate Page Data
+      document.title = `${pkg.title} | Travel Explorer Pakistan`;
+      document.getElementById("breadcrumb-title").innerText = pkg.title;
+      document.getElementById("pkg-title").innerText = pkg.title;
+      document.getElementById("pkg-category-badge").innerText = pkg.category;
+      document.getElementById("pkg-difficulty-badge").innerText = pkg.difficulty || "Moderate";
+      document.getElementById("pkg-destination-badge").innerHTML = `<i class="fa-solid fa-location-dot"></i> ${pkg.destination_name}`;
+      document.getElementById("pkg-duration").innerText = pkg.duration;
+      document.getElementById("pkg-group-size").innerText = pkg.group_size;
+      document.getElementById("pkg-departure-city").innerText = pkg.departure_city;
+      document.getElementById("pkg-rating").innerText = pkg.rating || "4.9";
+      document.getElementById("pkg-reviews-count").innerText = pkg.reviews_count || 45;
+      
+      document.getElementById("pkg-main-img").src = pkg.image_url;
+      document.getElementById("pkg-overview").innerText = pkg.overview;
+
+      // Gallery Thumbs
+      const gallery = [pkg.image_url, ...(pkg.gallery || [])];
+      document.getElementById("pkg-gallery-thumbs").innerHTML = gallery.map((img, i) => `
+        <img src="${img}" onclick="document.getElementById('pkg-main-img').src = '${img}'" 
+             style="width: 100px; height: 75px; object-fit: cover; border-radius: var(--radius-sm); cursor: pointer; border: 2px solid ${i === 0 ? 'var(--primary)' : 'transparent'}; transition: var(--transition);" 
+             onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+      `).join("");
+
+      // Itinerary
+      document.getElementById("pkg-itinerary-container").innerHTML = pkg.itinerary.map(item => `
+        <div style="border: 1px solid var(--slate-200); border-radius: var(--radius-md); overflow: hidden;">
+          <div style="background: var(--slate-50); padding: 1rem 1.25rem; font-weight: 700; color: var(--slate-900); display: flex; align-items: center; gap: 0.75rem;">
+            <span class="badge badge-primary">Day ${item.day}</span>
+            <span>${item.title}</span>
+          </div>
+          <div style="padding: 1.25rem; color: var(--slate-700); font-size: 0.95rem; line-height: 1.6; background: var(--white);">
+            ${item.details}
+          </div>
+        </div>
+      `).join("");
+
+      // Included / Excluded
+      document.getElementById("pkg-included-list").innerHTML = pkg.included_services.map(s => `
+        <li><i class="fa-solid fa-circle-check text-success"></i> ${s}</li>
+      `).join("");
+      document.getElementById("pkg-excluded-list").innerHTML = pkg.excluded_services.map(s => `
+        <li><i class="fa-solid fa-circle-xmark text-danger"></i> ${s}</li>
+      `).join("");
+
+      // Booking Widget Setup
+      document.getElementById("widget-price-pkr").innerText = pkg.price_pkr.toLocaleString();
+      document.getElementById("widget-price-usd").innerText = pkg.price_usd;
+      if (pkg.discount_percentage) {
+        document.getElementById("widget-discount-badge").innerText = `${pkg.discount_percentage}% OFF`;
+      } else {
+        document.getElementById("widget-discount-badge").style.display = "none";
+      }
+
+      const dateSelect = document.getElementById("widget-date");
+      dateSelect.innerHTML = pkg.available_dates.map(d => `<option value="${d}">${d} (Guaranteed Departure)</option>`).join("");
+
+      // Price calculation
+      function updateCalculator() {
+        const adults = parseInt(document.getElementById("widget-adults").value, 10);
+        const children = parseInt(document.getElementById("widget-children").value, 10);
+        const adultPrice = pkg.price_pkr;
+        const childPrice = Math.round(pkg.price_pkr * 0.7);
+
+        const subtotal = (adults * adultPrice) + (children * childPrice);
+        document.getElementById("calc-travelers-label").innerText = `${adults} Adult${adults > 1 ? 's' : ''}${children > 0 ? `, ${children} Child` : ''}`;
+        document.getElementById("calc-subtotal").innerText = subtotal.toLocaleString();
+        document.getElementById("calc-total").innerText = subtotal.toLocaleString();
+      }
+
+      document.getElementById("widget-adults").addEventListener("change", updateCalculator);
+      document.getElementById("widget-children").addEventListener("change", updateCalculator);
+      updateCalculator();
+
+      // Widget Form Submit -> redirect to booking.html with pre-selected parameters
+      document.getElementById("widget-booking-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const date = document.getElementById("widget-date").value;
+        const city = document.getElementById("widget-city").value;
+        const adults = document.getElementById("widget-adults").value;
+        const children = document.getElementById("widget-children").value;
+
+        const params = new URLSearchParams({
+          pkg: pkg.id,
+          date,
+          city,
+          adults,
+          children
+        });
+        window.location.href = `booking.html?${params.toString()}`;
+      });
+
+      // Reviews rendering & submission
+      async function loadReviews() {
+        const reviews = await TEP_DB.getReviews("package", pkg.id);
+        const list = document.getElementById("pkg-reviews-list");
+        if (reviews.length === 0) {
+          list.innerHTML = `<p class="text-muted" style="font-size: 0.95rem;">Be the first traveler to review this tour!</p>`;
+          return;
+        }
+        list.innerHTML = reviews.map(r => `
+          <div style="border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <strong style="color: var(--slate-900);">${r.reviewer_name}</strong>
+              <div style="color: var(--accent); font-size: 0.85rem;">${'<i class="fa-solid fa-star"></i>'.repeat(r.rating)}</div>
+            </div>
+            <p style="color: var(--slate-600); font-size: 0.9rem; margin-bottom: 0.25rem;">"${r.comment}"</p>
+            <small style="color: var(--slate-400); font-size: 0.75rem;"><i class="fa-solid fa-badge-check text-success"></i> Verified Travel Date: ${r.trip_date || '2026'}</small>
+          </div>
+        `).join("");
+      }
+
+      await loadReviews();
+
+      // Submit Review Form
+      document.getElementById("pkg-add-review-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("rev-author-name").value.trim();
+        const email = document.getElementById("rev-author-email").value.trim();
+        const rating = parseInt(document.getElementById("rev-rating").value, 10);
+        const tripDate = document.getElementById("rev-trip-date").value.trim() || "2026";
+        const comment = document.getElementById("rev-comment").value.trim();
+
+        const newRev = {
+          target_type: "package",
+          target_id: pkg.id,
+          reviewer_name: name,
+          reviewer_email: email,
+          rating,
+          comment,
+          trip_date: tripDate
+        };
+
+        await TEP_DB.addReview(newRev);
+        showToast("Review submitted successfully! Thank you for your feedback.");
+        document.getElementById("pkg-add-review-form").reset();
+        await loadReviews();
+      });
+    });
+  </script>
+</body>
+</html>

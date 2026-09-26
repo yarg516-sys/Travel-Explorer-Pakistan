@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Destinations Across Pakistan | Travel Explorer Pakistan</title>
+  <meta name="description" content="Explore Pakistan's most spectacular destinations: Hunza, Skardu, Swat, Murree, Naran, Fairy Meadows, Neelum Valley, Lahore, Karachi, and Islamabad with complete travel tips and cost breakdowns.">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-symbol"><i class="fa-solid fa-mountain-sun"></i></div>
+        <div class="brand-text">Travel Explorer <span>Pakistan</span></div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="destinations.html" class="nav-link active">Destinations</a></li>
+          <li><a href="packages.html" class="nav-link">Tour Packages</a></li>
+          <li><a href="booking.html" class="nav-link">Trip Booking</a></li>
+          <li><a href="account.html" class="nav-link">My Account</a></li>
+          <li><a href="admin.html" class="nav-link text-primary"><i class="fa-solid fa-shield-halved"></i> Admin</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div id="nav-auth-container"></div>
+        <button class="mobile-toggle" aria-label="Toggle Menu"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Page Header Banner -->
+    <section style="background: linear-gradient(135deg, var(--slate-900) 0%, var(--primary-dark) 100%); color: var(--white); padding: 4.5rem 0 3.5rem;">
+      <div class="container text-center" style="text-align: center;">
+        <span class="badge badge-accent" style="margin-bottom: 1rem;"><i class="fa-solid fa-compass"></i> GEOGRAPHIC DIRECTORY</span>
+        <h1 style="color: var(--white); font-size: 3rem; margin-bottom: 1rem;">Explore the Wonderlands of Pakistan</h1>
+        <p style="max-width: 750px; margin: 0 auto; color: rgba(255, 255, 255, 0.85); font-size: 1.15rem;">
+          From the glacier-carved peaks of the Karakoram to historic Mughal gateways and Arabian Sea shores, dive into authentic local insights, seasonal recommendations, and estimated budgets.
+        </p>
+      </div>
+    </section>
+
+    <!-- Filters & Search Toolbar -->
+    <section style="background: var(--white); border-bottom: 1px solid var(--slate-200); padding: 1.5rem 0;">
+      <div class="container">
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;">
+          <!-- Province Filter Pills -->
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="province-filters">
+            <button class="btn btn-primary btn-sm filter-pill active" data-province="all">All Regions</button>
+            <button class="btn btn-outline btn-sm filter-pill" data-province="Gilgit-Baltistan">Gilgit-Baltistan</button>
+            <button class="btn btn-outline btn-sm filter-pill" data-province="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</button>
+            <button class="btn btn-outline btn-sm filter-pill" data-province="Punjab">Punjab</button>
+            <button class="btn btn-outline btn-sm filter-pill" data-province="Sindh">Sindh</button>
+            <button class="btn btn-outline btn-sm filter-pill" data-province="Azad Jammu & Kashmir">Azad Kashmir</button>
+            <button class="btn btn-outline btn-sm filter-pill" data-province="Federal Capital">Islamabad Capital</button>
+          </div>
+
+          <!-- Keyword Search Bar -->
+          <div style="position: relative; min-width: 280px;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--slate-400);"></i>
+            <input type="text" id="destination-search-input" class="form-control" placeholder="Search by name, attraction, or valley..." style="padding-left: 2.75rem;">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Destinations Grid -->
+    <section class="section">
+      <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <h2 style="font-size: 1.5rem;"><span id="destinations-count">10</span> Destinations Found</h2>
+          <span style="font-size: 0.9rem; color: var(--slate-500);">Showing comprehensive travel guides</span>
+        </div>
+
+        <div id="destinations-full-grid" class="destinations-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Destination Modal -->
+  <div id="destination-modal" class="modal-backdrop">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <div>
+          <h3 id="dest-modal-title" class="modal-title">Destination Name</h3>
+          <span id="dest-modal-tagline" class="text-primary font-semibold text-sm">Tagline</span>
+        </div>
+        <button class="modal-close" onclick="closeModal('destination-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="position: relative; height: 320px; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1.5rem;">
+          <img id="dest-modal-img" src="" alt="Destination" style="width: 100%; height: 100%; object-fit: cover;">
+          <div style="position: absolute; bottom: 1rem; left: 1rem; display: flex; gap: 0.5rem;">
+            <span id="dest-modal-province" class="badge badge-primary">Province</span>
+            <span class="badge" style="background: rgba(15,23,42,0.8); color: white;"><i class="fa-solid fa-mountain"></i> Alt: <span id="dest-modal-altitude"></span></span>
+          </div>
+        </div>
+
+        <p id="dest-modal-desc" style="color: var(--slate-700); line-height: 1.6; margin-bottom: 1.5rem; font-size: 1.05rem;"></p>
+
+        <!-- Cost Breakdown Cards -->
+        <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.75rem;">
+          <h4 style="font-size: 1rem; margin-bottom: 1rem; color: var(--slate-800); text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-money-bill-wave text-success"></i> Estimated Travel Cost Per Person</h4>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center;">
+            <div style="background: var(--white); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+              <span style="font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Budget Traveler</span>
+              <div id="dest-modal-cost-budget" style="font-size: 1.25rem; font-weight: 800; color: var(--primary);"></div>
+              <small style="color: var(--slate-500); font-size: 0.75rem;">Public transit & guesthouses</small>
+            </div>
+            <div style="background: var(--white); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+              <span style="font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Comfort / Mid-Range</span>
+              <div id="dest-modal-cost-mid" style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900);"></div>
+              <small style="color: var(--slate-500); font-size: 0.75rem;">AC transport & 3-star hotels</small>
+            </div>
+            <div style="background: var(--white); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+              <span style="font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Luxury / VIP</span>
+              <div id="dest-modal-cost-luxury" style="font-size: 1.25rem; font-weight: 800; color: var(--accent-hover);"></div>
+              <small style="color: var(--slate-500); font-size: 0.75rem;">Dedicated Prado & luxury resorts</small>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.75rem;">
+          <div>
+            <h4 style="font-size: 1.1rem; margin-bottom: 0.85rem;"><i class="fa-solid fa-landmark text-primary"></i> Popular Attractions</h4>
+            <ul id="dest-modal-attractions" style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.95rem;"></ul>
+          </div>
+          <div>
+            <h4 style="font-size: 1.1rem; margin-bottom: 0.85rem;"><i class="fa-solid fa-person-hiking text-accent"></i> Available Activities</h4>
+            <ul id="dest-modal-activities" style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.95rem;"></ul>
+          </div>
+        </div>
+
+        <div style="background: #eff6ff; border-left: 4px solid var(--secondary); padding: 1.25rem; border-radius: 0 var(--radius-md) var(--radius-md) 0;">
+          <h4 style="font-size: 1rem; color: #1e3a8a; margin-bottom: 0.5rem;"><i class="fa-solid fa-circle-info"></i> Essential Local Travel Tips</h4>
+          <ul id="dest-modal-tips" style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem; color: #1e40af;"></ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('destination-modal')">Close</button>
+        <a id="dest-modal-book-btn" href="packages.html" class="btn btn-primary"><i class="fa-solid fa-compass"></i> View Tour Packages</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Travel Explorer Pakistan. All rights reserved.</p>
+        <div>
+          <span id="footer-supabase-status" class="backend-status-badge">
+            <i class="fa-solid fa-spinner fa-spin"></i> Checking Supabase Backend...
+          </span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      let allDestinations = await TEP_DB.getDestinations();
+      let activeProvince = "all";
+      let searchQuery = "";
+
+      function renderDestinations() {
+        const grid = document.getElementById("destinations-full-grid");
+        const countEl = document.getElementById("destinations-count");
+
+        let filtered = allDestinations.filter(d => {
+          const matchProv = activeProvince === "all" || d.province.toLowerCase().includes(activeProvince.toLowerCase());
+          const matchSearch = !searchQuery || 
+            d.name.toLowerCase().includes(searchQuery) ||
+            d.description.toLowerCase().includes(searchQuery) ||
+            d.attractions.some(a => a.toLowerCase().includes(searchQuery));
+          return matchProv && matchSearch;
+        });
+
+        countEl.innerText = filtered.length;
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; background: var(--white); border-radius: var(--radius-lg);">
+              <i class="fa-solid fa-compass" style="font-size: 3rem; color: var(--slate-300); margin-bottom: 1rem;"></i>
+              <h3>No destinations found</h3>
+              <p class="text-muted">Try adjusting your province filter or search query.</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = filtered.map(d => `
+          <div class="dest-card" id="${d.id}">
+            <div class="dest-card-image-wrap">
+              <img src="${d.image_url}" alt="${d.name}" class="dest-card-img" loading="lazy">
+              <span class="dest-badge-province">${d.province}</span>
+              <div class="dest-rating">
+                <i class="fa-solid fa-star text-accent"></i> ${d.rating || '4.9'}
+              </div>
+            </div>
+            <div class="dest-card-body">
+              <h3 class="dest-card-title">${d.name}</h3>
+              <p class="dest-card-tagline">${d.tagline || d.province}</p>
+              <p class="dest-card-desc">${d.description}</p>
+              
+              <div class="dest-meta-pills">
+                <span class="dest-meta-pill"><i class="fa-solid fa-mountain"></i> ${d.altitude || 'High Altitude'}</span>
+                <span class="dest-meta-pill"><i class="fa-regular fa-calendar-check"></i> ${d.best_time.split('(')[0]}</span>
+              </div>
+
+              <!-- Top Attractions Snippet -->
+              <div style="margin-bottom: 1.25rem;">
+                <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--slate-400); font-weight: 700; display: block; margin-bottom: 0.4rem;">Top Attractions</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                  ${d.attractions.slice(0, 3).map(a => `<span style="font-size: 0.75rem; background: var(--slate-50); border: 1px solid var(--slate-200); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm);">${a.split('(')[0]}</span>`).join("")}
+                </div>
+              </div>
+
+              <div class="dest-card-footer">
+                <div class="dest-price-box">
+                  <span class="dest-price-label">Budget From</span>
+                  <span class="dest-price-val">PKR ${d.estimated_cost?.budget_pkr?.toLocaleString() || '25,000'}</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <button onclick="openDestinationModal('${d.id}')" class="btn btn-outline btn-sm">
+                    <i class="fa-regular fa-eye"></i> Details
+                  </button>
+                  <a href="packages.html?dest=${encodeURIComponent(d.id)}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-compass"></i> Tours
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      // Province Pill Click Handlers
+      document.querySelectorAll(".filter-pill").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".filter-pill").forEach(b => {
+            b.classList.remove("btn-primary", "active");
+            b.classList.add("btn-outline");
+          });
+          btn.classList.add("btn-primary", "active");
+          btn.classList.remove("btn-outline");
+          activeProvince = btn.getAttribute("data-province");
+          renderDestinations();
+        });
+      });
+
+      // Search input handler
+      document.getElementById("destination-search-input").addEventListener("input", (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderDestinations();
+      });
+
+      renderDestinations();
+
+      // Check URL hash if user navigated to #hunza-valley, open modal automatically
+      if (window.location.hash) {
+        const destId = window.location.hash.replace("#", "");
+        openDestinationModal(destId);
+      }
+    });
+  </script>
+</body>
+</html>

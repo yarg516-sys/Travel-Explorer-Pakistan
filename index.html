@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Explorer Pakistan | Discover Mountains, Valleys & Heritage</title>
+  <meta name="description" content="Discover Pakistan's breathtaking landscapes, ancient Silk Route heritage, and curated tour packages to Hunza, Skardu, Swat, Fairy Meadows, and beyond.">
+  
+  <!-- Fonts & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/main.css">
+  
+  <!-- Supabase CDN Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- ================= NAVIGATION BAR ================= -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-symbol">
+          <i class="fa-solid fa-mountain-sun"></i>
+        </div>
+        <div class="brand-text">Travel Explorer <span>Pakistan</span></div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link active">Home</a></li>
+          <li><a href="destinations.html" class="nav-link">Destinations</a></li>
+          <li><a href="packages.html" class="nav-link">Tour Packages</a></li>
+          <li><a href="booking.html" class="nav-link">Trip Booking</a></li>
+          <li><a href="account.html" class="nav-link">My Account</a></li>
+          <li><a href="admin.html" class="nav-link text-primary"><i class="fa-solid fa-shield-halved"></i> Admin</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div id="nav-auth-container">
+          <!-- Populated dynamically by auth.js -->
+          <a href="account.html?tab=login" class="nav-btn-link"><i class="fa-regular fa-user"></i> Sign In</a>
+          <a href="packages.html" class="btn btn-primary btn-sm"><i class="fa-solid fa-compass"></i> Book Tour</a>
+        </div>
+        <button class="mobile-toggle" aria-label="Toggle Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ================= HERO SECTION ================= -->
+    <section class="hero">
+      <div class="container hero-content">
+        <div class="hero-pill">
+          <i class="fa-solid fa-sparkles"></i> Unveil the Wonder of Pakistan's Northern & Cultural Valleys
+        </div>
+        <h1 class="hero-title">Experience the Untamed Majesty of Pakistan</h1>
+        <p class="hero-subtitle">
+          From the towering 8,000-meter peaks of the Karakoram and fairy-tale glacial lakes to the majestic Mughal courtyards of Lahore, explore curated original tours with 100% verified local guides.
+        </p>
+
+        <!-- Big Travel Search Box -->
+        <form id="hero-search-form" class="hero-search-box">
+          <div class="search-field">
+            <label class="search-label" for="search-destination"><i class="fa-solid fa-location-dot"></i> Destination</label>
+            <select id="search-destination" class="search-select">
+              <option value="">All Destinations</option>
+              <option value="hunza-valley">Hunza Valley</option>
+              <option value="skardu-valley">Skardu & Deosai</option>
+              <option value="swat-valley">Swat & Kalam</option>
+              <option value="fairy-meadows">Fairy Meadows (Nanga Parbat)</option>
+              <option value="neelum-valley">Neelum Valley Kashmir</option>
+              <option value="naran-kaghan">Naran & Babusar Top</option>
+              <option value="lahore-heritage">Lahore Heritage</option>
+              <option value="karachi-coastal">Karachi & Churna Island</option>
+              <option value="islamabad-capital">Islamabad Capital</option>
+              <option value="murree-galiyat">Murree & Galiyat</option>
+            </select>
+          </div>
+
+          <div class="search-field">
+            <label class="search-label" for="search-category"><i class="fa-solid fa-compass"></i> Trip Style</label>
+            <select id="search-category" class="search-select">
+              <option value="">All Categories</option>
+              <option value="Mountain Expeditions">Mountain Expeditions</option>
+              <option value="Lakes & Valleys">Lakes & Valleys</option>
+              <option value="Cultural & Heritage">Cultural & Heritage</option>
+              <option value="Desert & Coastal">Desert & Coastal</option>
+            </select>
+          </div>
+
+          <div class="search-field">
+            <label class="search-label" for="search-duration"><i class="fa-solid fa-clock"></i> Duration</label>
+            <select id="search-duration" class="search-select">
+              <option value="">Any Duration</option>
+              <option value="short">Short Getaway (3 - 4 Days)</option>
+              <option value="medium">Classic Expedition (5 - 6 Days)</option>
+              <option value="long">Grand Tour (7 - 8+ Days)</option>
+            </select>
+          </div>
+
+          <div class="search-field">
+            <label class="search-label" for="search-budget"><i class="fa-solid fa-wallet"></i> Budget Range</label>
+            <select id="search-budget" class="search-select">
+              <option value="">Any Budget</option>
+              <option value="35000">Under PKR 35,000</option>
+              <option value="60000">PKR 35,000 - 60,000</option>
+              <option value="90000">PKR 60,000 - 90,000</option>
+              <option value="90001">PKR 90,000+</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary hero-search-btn">
+            <i class="fa-solid fa-magnifying-glass"></i> Explore Tours
+          </button>
+        </form>
+
+        <!-- Quick Trending Tags -->
+        <div class="quick-tags">
+          <span style="opacity: 0.85;">Popular Searches:</span>
+          <a href="packages.html?dest=hunza-valley" class="quick-tag-chip">Hunza & Khunjerab</a>
+          <a href="packages.html?dest=skardu-valley" class="quick-tag-chip">Skardu Deosai</a>
+          <a href="packages.html?dest=fairy-meadows" class="quick-tag-chip">Fairy Meadows</a>
+          <a href="packages.html?dest=swat-valley" class="quick-tag-chip">Swat & Malam Jabba</a>
+          <a href="packages.html?dest=lahore-heritage" class="quick-tag-chip">Lahore Culture</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= POPULAR DESTINATIONS ================= -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">Iconic Landscapes</span>
+          <h2 class="section-title">Popular Destinations Across Pakistan</h2>
+          <p class="section-subtitle">
+            From glacial summits in Gilgit-Baltistan to verdant Kashmir valleys and historic Mughal cities, find your next unforgettable adventure.
+          </p>
+        </div>
+
+        <div id="home-destinations-container" class="destinations-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem;">
+          <a href="destinations.html" class="btn btn-outline btn-lg">
+            <i class="fa-solid fa-map-location-dot"></i> View All 10 Destinations with Travel Tips & Cost Breakdowns
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FEATURED TOUR PACKAGES ================= -->
+    <section class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">Curated Itineraries</span>
+          <h2 class="section-title">Handcrafted Travel Packages</h2>
+          <p class="section-subtitle">
+            All-inclusive trips with verified 4x4 and AC coasters, hand-picked hotels, seasoned local Wakhi/Balti guides, and flexible departure dates.
+          </p>
+        </div>
+
+        <div id="home-packages-container" class="packages-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <div style="text-align: center; margin-top: 3.5rem;">
+          <a href="packages.html" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-list-check"></i> Explore All Tour Packages & Filters
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TRAVEL CATEGORIES ================= -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">Choose Your Adventure</span>
+          <h2 class="section-title">Explore by Travel Style</h2>
+          <p class="section-subtitle">
+            Whether you crave high-altitude trekking, peaceful lake rowing, or architectural deep-dives.
+          </p>
+        </div>
+
+        <div class="categories-grid">
+          <a href="packages.html?cat=Mountain+Expeditions" class="cat-card">
+            <div class="cat-card-bg" style="background-image: url('https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80');"></div>
+            <div class="cat-card-overlay"></div>
+            <div class="cat-card-content">
+              <div class="cat-icon-badge"><i class="fa-solid fa-mountain"></i></div>
+              <h3 class="cat-card-title">Mountain Expeditions</h3>
+              <span class="cat-card-count">4 Curated Packages</span>
+            </div>
+          </a>
+
+          <a href="packages.html?cat=Lakes+%26+Valleys" class="cat-card">
+            <div class="cat-card-bg" style="background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80');"></div>
+            <div class="cat-card-overlay"></div>
+            <div class="cat-card-content">
+              <div class="cat-icon-badge"><i class="fa-solid fa-water"></i></div>
+              <h3 class="cat-card-title">Lakes & Valleys</h3>
+              <span class="cat-card-count">3 Curated Packages</span>
+            </div>
+          </a>
+
+          <a href="packages.html?cat=Cultural+%26+Heritage" class="cat-card">
+            <div class="cat-card-bg" style="background-image: url('https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&w=800&q=80');"></div>
+            <div class="cat-card-overlay"></div>
+            <div class="cat-card-content">
+              <div class="cat-icon-badge"><i class="fa-solid fa-monument"></i></div>
+              <h3 class="cat-card-title">Cultural & Heritage</h3>
+              <span class="cat-card-count">2 Curated Packages</span>
+            </div>
+          </a>
+
+          <a href="packages.html?cat=Desert+%26+Coastal" class="cat-card">
+            <div class="cat-card-bg" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80');"></div>
+            <div class="cat-card-overlay"></div>
+            <div class="cat-card-content">
+              <div class="cat-icon-badge"><i class="fa-solid fa-umbrella-beach"></i></div>
+              <h3 class="cat-card-title">Desert & Coastal</h3>
+              <span class="cat-card-count">2 Curated Packages</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SPECIAL OFFERS ================= -->
+    <section class="section" style="padding-top: 0;">
+      <div class="container">
+        <div class="offers-card">
+          <div>
+            <span class="offers-badge"><i class="fa-solid fa-bolt"></i> LIMITED TIME OFFER</span>
+            <h2 class="offers-title">Autumn in Karakoram: Flat 15% OFF Hunza & Skardu Tours</h2>
+            <p class="offers-text">
+              Witness the golden apricot foliage and crystal turquoise waters of northern Pakistan. Use promo coupon code <strong style="color: #fef3c7; text-decoration: underline;">EXPLOREPAK15</strong> at checkout.
+            </p>
+            
+            <div class="countdown-box">
+              <div class="countdown-unit">
+                <div class="countdown-num" id="count-hours">14</div>
+                <div class="countdown-label">Hours</div>
+              </div>
+              <div class="countdown-unit">
+                <div class="countdown-num" id="count-mins">42</div>
+                <div class="countdown-label">Minutes</div>
+              </div>
+              <div class="countdown-unit">
+                <div class="countdown-num" id="count-secs">15</div>
+                <div class="countdown-label">Seconds</div>
+              </div>
+            </div>
+
+            <a href="packages.html?coupon=EXPLOREPAK15" class="btn btn-accent btn-lg">
+              <i class="fa-solid fa-ticket"></i> Claim 15% Discount Now
+            </a>
+          </div>
+
+          <div style="text-align: center;">
+            <img src="https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=700&q=80" 
+                 alt="Autumn Hunza" 
+                 style="border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); border: 4px solid rgba(255,255,255,0.2);">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TRUST & VALUE PROP STRIP ================= -->
+    <section class="trust-strip">
+      <div class="container">
+        <div class="trust-grid">
+          <div class="trust-item">
+            <div class="trust-icon"><i class="fa-solid fa-shield-heart"></i></div>
+            <div>
+              <h4>100% Certified Guides</h4>
+              <p>Native Wakhi, Balti & Pashtun experts with medical & route training.</p>
+            </div>
+          </div>
+
+          <div class="trust-item">
+            <div class="trust-icon"><i class="fa-solid fa-van-shuttle"></i></div>
+            <div>
+              <h4>Modern Fleet & 4x4s</h4>
+              <p>Air-conditioned Saloon Coasters and rugged Prado 4x4 jeeps.</p>
+            </div>
+          </div>
+
+          <div class="trust-item">
+            <div class="trust-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            <div>
+              <h4>Best Price Guarantee</h4>
+              <p>Transparent pricing in PKR and USD with zero hidden surcharges.</p>
+            </div>
+          </div>
+
+          <div class="trust-item">
+            <div class="trust-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <div>
+              <h4>Supabase Cloud Sync</h4>
+              <p>Live encrypted booking confirmations and instant PNR tracking.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CUSTOMER REVIEWS ================= -->
+    <section class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">Verified Testimonials</span>
+          <h2 class="section-title">What Our Travelers Say</h2>
+          <p class="section-subtitle">
+            Authentic experiences shared by domestic explorers and international globetrotters.
+          </p>
+        </div>
+
+        <div id="home-reviews-container" class="reviews-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CALL TO ACTION ================= -->
+    <section class="section" style="background: linear-gradient(135deg, var(--slate-900) 0%, var(--primary-dark) 100%); color: var(--white); text-align: center;">
+      <div class="container container-narrow">
+        <span class="badge badge-accent" style="margin-bottom: 1.5rem;">CUSTOM EXPEDITIONS</span>
+        <h2 style="color: var(--white); font-size: 2.75rem; margin-bottom: 1.25rem;">Ready to Explore the Unseen Pakistan?</h2>
+        <p style="font-size: 1.15rem; color: rgba(255,255,255,0.85); margin-bottom: 2.5rem;">
+          Whether you want a private family tour, a high-altitude mountaineering trek, or corporate retreat, our trip specialists are here 24/7.
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <a href="packages.html" class="btn btn-primary btn-lg">Browse All Packages</a>
+          <a href="booking.html" class="btn btn-outline btn-lg" style="color: var(--white); border-color: rgba(255,255,255,0.4);">
+            <i class="fa-solid fa-calendar-plus"></i> Instant Booking
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo" style="color: var(--white); margin-bottom: 1rem;">
+            <div class="brand-symbol"><i class="fa-solid fa-mountain-sun"></i></div>
+            <span>Travel Explorer Pakistan</span>
+          </div>
+          <p>
+            Pakistan's premier travel discovery platform. Connecting passionate travelers with authentic high-altitude expeditions, cultural heritage trails, and coastal escapades.
+          </p>
+          <div class="footer-social-links">
+            <a href="#" class="footer-social-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" class="footer-social-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="footer-social-btn" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            <a href="#" class="footer-social-btn" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Destinations</h4>
+          <ul class="footer-links">
+            <li><a href="destinations.html#hunza-valley">Hunza Valley</a></li>
+            <li><a href="destinations.html#skardu-valley">Skardu & Deosai</a></li>
+            <li><a href="destinations.html#swat-valley">Swat & Kalam</a></li>
+            <li><a href="destinations.html#fairy-meadows">Fairy Meadows</a></li>
+            <li><a href="destinations.html#neelum-valley">Neelum Valley</a></li>
+            <li><a href="destinations.html#lahore-heritage">Lahore City</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Trip Planning</h4>
+          <ul class="footer-links">
+            <li><a href="packages.html">Tour Packages</a></li>
+            <li><a href="booking.html">Online Booking</a></li>
+            <li><a href="account.html">My Account & Bookings</a></li>
+            <li><a href="admin.html">Admin Dashboard</a></li>
+            <li><a href="destinations.html">Travel Tips & Costs</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Contact & Inquiries</h4>
+          <p style="font-size: 0.9rem; margin-bottom: 0.5rem;"><i class="fa-solid fa-location-dot text-primary"></i> Blue Area, Jinnah Avenue, Islamabad, Pakistan</p>
+          <p style="font-size: 0.9rem; margin-bottom: 0.5rem;"><i class="fa-solid fa-phone text-primary"></i> +92 51 289 4400 / +92 300 1234567</p>
+          <p style="font-size: 0.9rem; margin-bottom: 1rem;"><i class="fa-solid fa-envelope text-primary"></i> info@travelexplorer.pk</p>
+          <div>
+            <span id="footer-supabase-status" class="backend-status-badge">
+              <i class="fa-solid fa-spinner fa-spin"></i> Checking Supabase Backend...
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Travel Explorer Pakistan. All rights reserved. Built with modern HTML, CSS, JavaScript & Supabase.</p>
+        <p style="color: var(--slate-500);">Project competition presentation ready.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= DESTINATION QUICK VIEW MODAL ================= -->
+  <div id="destination-modal" class="modal-backdrop">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <div>
+          <h3 id="dest-modal-title" class="modal-title">Destination Name</h3>
+          <span id="dest-modal-tagline" class="text-primary font-semibold text-sm">Tagline</span>
+        </div>
+        <button class="modal-close" onclick="closeModal('destination-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="position: relative; height: 280px; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1.5rem;">
+          <img id="dest-modal-img" src="" alt="Destination" style="width: 100%; height: 100%; object-fit: cover;">
+          <div style="position: absolute; bottom: 1rem; left: 1rem; display: flex; gap: 0.5rem;">
+            <span id="dest-modal-province" class="badge badge-primary">Province</span>
+            <span class="badge" style="background: rgba(15,23,42,0.8); color: white;"><i class="fa-solid fa-mountain"></i> Alt: <span id="dest-modal-altitude"></span></span>
+          </div>
+        </div>
+
+        <p id="dest-modal-desc" style="color: var(--slate-700); line-height: 1.6; margin-bottom: 1.5rem;"></p>
+
+        <!-- Key Information Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; background: var(--slate-50); padding: 1.25rem; border-radius: var(--radius-md);">
+          <div>
+            <strong style="display: block; font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Best Time to Visit</strong>
+            <span id="dest-modal-best-time" style="font-weight: 600; color: var(--slate-900);"></span>
+          </div>
+          <div>
+            <strong style="display: block; font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Estimated Cost (Budget)</strong>
+            <span id="dest-modal-cost-budget" style="font-weight: 700; color: var(--primary);"></span>
+          </div>
+          <div>
+            <strong style="display: block; font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Estimated Cost (Mid-Range)</strong>
+            <span id="dest-modal-cost-mid" style="font-weight: 700; color: var(--slate-900);"></span>
+          </div>
+          <div>
+            <strong style="display: block; font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Estimated Cost (Luxury)</strong>
+            <span id="dest-modal-cost-luxury" style="font-weight: 700; color: var(--accent-hover);"></span>
+          </div>
+        </div>
+
+        <!-- Attractions & Activities -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+          <div>
+            <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem;"><i class="fa-solid fa-landmark text-primary"></i> Popular Attractions</h4>
+            <ul id="dest-modal-attractions" style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem;"></ul>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem;"><i class="fa-solid fa-person-hiking text-accent"></i> Available Activities</h4>
+            <ul id="dest-modal-activities" style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem;"></ul>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem;"><i class="fa-solid fa-circle-info text-info"></i> Essential Travel Tips</h4>
+          <ul id="dest-modal-tips" style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem;"></ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('destination-modal')">Close</button>
+        <a id="dest-modal-book-btn" href="packages.html" class="btn btn-primary"><i class="fa-solid fa-compass"></i> Find Tours for this Destination</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Populate Home Page Content
+    document.addEventListener("DOMContentLoaded", async () => {
+      // 1. Render Featured Destinations (Top 6)
+      const destinations = await TEP_DB.getDestinations();
+      const destContainer = document.getElementById("home-destinations-container");
+      if (destContainer && destinations) {
+        destContainer.innerHTML = destinations.slice(0, 6).map(d => `
+          <div class="dest-card">
+            <div class="dest-card-image-wrap">
+              <img src="${d.image_url}" alt="${d.name}" class="dest-card-img" loading="lazy">
+              <span class="dest-badge-province">${d.province}</span>
+              <div class="dest-rating">
+                <i class="fa-solid fa-star text-accent"></i> ${d.rating || '4.9'}
+              </div>
+            </div>
+            <div class="dest-card-body">
+              <h3 class="dest-card-title">${d.name}</h3>
+              <p class="dest-card-tagline">${d.tagline || d.province}</p>
+              <p class="dest-card-desc">${d.description}</p>
+              
+              <div class="dest-meta-pills">
+                <span class="dest-meta-pill"><i class="fa-solid fa-mountain"></i> ${d.altitude || 'High Altitude'}</span>
+                <span class="dest-meta-pill"><i class="fa-regular fa-calendar-check"></i> ${d.best_time.split('(')[0]}</span>
+              </div>
+
+              <div class="dest-card-footer">
+                <div class="dest-price-box">
+                  <span class="dest-price-label">Est. Budget From</span>
+                  <span class="dest-price-val">PKR ${d.estimated_cost?.budget_pkr?.toLocaleString() || '25,000'}</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <button onclick="openDestinationModal('${d.id}')" class="btn btn-outline btn-sm">
+                    <i class="fa-regular fa-eye"></i> Details
+                  </button>
+                  <a href="packages.html?dest=${encodeURIComponent(d.id)}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-compass"></i> Tours
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      // 2. Render Featured Tour Packages (Top 3)
+      const packages = await TEP_DB.getPackages();
+      const pkgContainer = document.getElementById("home-packages-container");
+      if (pkgContainer && packages) {
+        pkgContainer.innerHTML = packages.slice(0, 3).map(p => `
+          <div class="pkg-card">
+            <div class="pkg-card-img-wrap">
+              <img src="${p.image_url}" alt="${p.title}" class="pkg-card-img" loading="lazy">
+              ${p.discount_percentage ? `<span class="pkg-discount-ribbon">${p.discount_percentage}% OFF</span>` : ''}
+              <span class="pkg-duration-pill"><i class="fa-regular fa-clock"></i> ${p.duration}</span>
+            </div>
+            <div class="pkg-card-body">
+              <div class="pkg-location-row">
+                <span><i class="fa-solid fa-location-dot text-primary"></i> ${p.destination_name}</span>
+                <span style="font-weight: 700; color: var(--accent);"><i class="fa-solid fa-star"></i> ${p.rating || '4.9'} (${p.reviews_count || 30})</span>
+              </div>
+              <h3 class="pkg-card-title">${p.title}</h3>
+              <ul class="pkg-features-list">
+                ${p.included_services.slice(0, 3).map(s => `<li><i class="fa-solid fa-circle-check"></i> ${s}</li>`).join("")}
+              </ul>
+              <div class="pkg-card-footer">
+                <div class="pkg-price-group">
+                  <span class="pkg-price-amount">PKR ${p.price_pkr.toLocaleString()}</span>
+                  <span class="pkg-price-usd">Approx. $${p.price_usd} USD / person</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a href="package-details.html?id=${p.id}" class="btn btn-outline btn-sm">Itinerary</a>
+                  <a href="booking.html?pkg=${p.id}" class="btn btn-primary btn-sm">Book</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      // 3. Render Reviews
+      const reviews = await TEP_DB.getReviews();
+      const revContainer = document.getElementById("home-reviews-container");
+      if (revContainer && reviews) {
+        revContainer.innerHTML = reviews.slice(0, 3).map(r => `
+          <div class="review-card">
+            <div class="review-stars">
+              ${'<i class="fa-solid fa-star"></i>'.repeat(r.rating)}
+            </div>
+            <p class="review-text">"${r.comment}"</p>
+            <div class="reviewer-profile">
+              <div class="reviewer-avatar">${r.reviewer_name.substring(0, 2).toUpperCase()}</div>
+              <div>
+                <h4 class="reviewer-name">${r.reviewer_name}</h4>
+                <span class="reviewer-trip"><i class="fa-solid fa-badge-check text-success"></i> Verified Traveler &bull; ${r.trip_date || '2026'}</span>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+    });
+  </script>
+</body>
+</html>

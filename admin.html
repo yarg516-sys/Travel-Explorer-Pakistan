@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Travel Explorer Pakistan</title>
+  <meta name="description" content="Management portal for destinations, packages, bookings, customer reservations, and Supabase database synchronization.">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .admin-table-wrap {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      box-shadow: var(--shadow-sm);
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    .admin-table th {
+      background: var(--slate-50);
+      padding: 1rem 1.25rem;
+      font-weight: 700;
+      color: var(--slate-700);
+      border-bottom: 1px solid var(--slate-200);
+      white-space: nowrap;
+    }
+    .admin-table td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--slate-100);
+      vertical-align: middle;
+    }
+    .admin-table tr:hover {
+      background-color: var(--slate-50);
+    }
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    .stat-icon {
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .admin-tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none;
+      background: none;
+      font-weight: 600;
+      color: var(--slate-600);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+    }
+    .admin-tab-btn:hover {
+      color: var(--primary);
+    }
+    .admin-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-symbol"><i class="fa-solid fa-mountain-sun"></i></div>
+        <div class="brand-text">Travel Explorer <span>Pakistan</span></div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="destinations.html" class="nav-link">Destinations</a></li>
+          <li><a href="packages.html" class="nav-link">Tour Packages</a></li>
+          <li><a href="booking.html" class="nav-link">Trip Booking</a></li>
+          <li><a href="account.html" class="nav-link">My Account</a></li>
+          <li><a href="admin.html" class="nav-link active text-primary"><i class="fa-solid fa-shield-halved"></i> Admin</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div id="nav-auth-container"></div>
+        <button class="mobile-toggle" aria-label="Toggle Menu"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" style="padding-top: 2.5rem;">
+      <div class="container">
+
+        <!-- Admin Access Guard Overlay (if locked) -->
+        <div id="admin-lock-screen" style="display: none; max-width: 450px; margin: 3rem auto; text-align: center; background: var(--white); padding: 2.5rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); border: 1px solid var(--slate-200);">
+          <div style="width: 60px; height: 60px; background: #fee2e2; color: #dc2626; border-radius: var(--radius-full); display: inline-flex; align-items: center; justify-content: center; font-size: 1.75rem; margin-bottom: 1.25rem;">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Staff & Admin Access</h2>
+          <p style="color: var(--slate-500); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Enter the admin passcode or click Demo Unlock to manage destinations, packages, and bookings.
+          </p>
+          <div class="form-group">
+            <input type="password" id="admin-passcode-input" class="form-control" placeholder="Admin Passcode (Default: admin123)" style="text-align: center;">
+          </div>
+          <button id="btn-unlock-admin" class="btn btn-primary btn-block" style="margin-bottom: 0.75rem;">
+            <i class="fa-solid fa-key"></i> Unlock Dashboard
+          </button>
+          <button id="btn-quick-demo-admin" class="btn btn-outline btn-block btn-sm">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> 1-Click Quick Demo Unlock
+          </button>
+        </div>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <div id="admin-content" style="display: block;">
+
+          <!-- Top Bar Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <span class="badge badge-admin"><i class="fa-solid fa-shield-halved"></i> MANAGEMENT PORTAL</span>
+              <h1 style="font-size: 2.25rem; margin-top: 0.25rem;">Platform Administration</h1>
+            </div>
+
+            <!-- Supabase Cloud Operations -->
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button class="btn btn-outline btn-sm" id="btn-check-supabase">
+                <i class="fa-solid fa-cloud"></i> Test Supabase Cloud
+              </button>
+              <button class="btn btn-primary btn-sm" id="btn-seed-supabase">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Seed / Sync to Supabase
+              </button>
+              <button class="btn btn-outline btn-sm" id="btn-view-sql">
+                <i class="fa-solid fa-code"></i> View SQL Schema
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Metric Cards Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+            
+            <div class="stat-card">
+              <div class="stat-icon" style="background: var(--primary-subtle); color: var(--primary);">
+                <i class="fa-solid fa-ticket"></i>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Total Bookings</span>
+                <h3 id="stat-total-bookings" style="font-size: 1.75rem; margin: 0;">0</h3>
+                <small style="color: var(--success); font-weight: 600;"><span id="stat-confirmed-bookings">0</span> Confirmed</small>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #fef3c7; color: #b45309;">
+                <i class="fa-solid fa-money-bill-trend-up"></i>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Gross Revenue</span>
+                <h3 id="stat-total-revenue" style="font-size: 1.75rem; margin: 0; color: var(--slate-900);">PKR 0</h3>
+                <small style="color: var(--slate-500);">Live Calculated</small>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #e0f2fe; color: #0369a1;">
+                <i class="fa-solid fa-map-location-dot"></i>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Destinations</span>
+                <h3 id="stat-destinations-count" style="font-size: 1.75rem; margin: 0;">10</h3>
+                <small style="color: var(--slate-500);">Across Pakistan</small>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #f3e8ff; color: #7e22ce;">
+                <i class="fa-solid fa-boxes-packing"></i>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; color: var(--slate-400); text-transform: uppercase;">Tour Packages</span>
+                <h3 id="stat-packages-count" style="font-size: 1.75rem; margin: 0;">8</h3>
+                <small style="color: var(--slate-500);">Active Itineraries</small>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Tab Bar -->
+          <div style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--slate-200); margin-bottom: 2rem; overflow-x: auto;">
+            <button class="admin-tab-btn active" id="tab-btn-bookings">
+              <i class="fa-solid fa-ticket"></i> Manage Bookings (<span id="badge-bookings-count">0</span>)
+            </button>
+            <button class="admin-tab-btn" id="tab-btn-destinations">
+              <i class="fa-solid fa-mountain-sun"></i> Destinations (<span id="badge-dest-count">10</span>)
+            </button>
+            <button class="admin-tab-btn" id="tab-btn-packages">
+              <i class="fa-solid fa-compass"></i> Tour Packages (<span id="badge-pkg-count">8</span>)
+            </button>
+            <button class="admin-tab-btn" id="tab-btn-reviews">
+              <i class="fa-solid fa-star"></i> Customer Reviews (<span id="badge-rev-count">5</span>)
+            </button>
+          </div>
+
+          <!-- ================= TAB 1: BOOKINGS MANAGEMENT ================= -->
+          <div id="admin-tab-bookings">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+              <h3 style="font-size: 1.25rem;">Customer Reservations</h3>
+              <div style="display: flex; gap: 0.75rem;">
+                <input type="text" id="admin-search-bookings" class="form-control" placeholder="Search by customer name, ref or email..." style="width: 280px; padding: 0.5rem 1rem;">
+              </div>
+            </div>
+
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Ref / Date</th>
+                    <th>Customer Details</th>
+                    <th>Package & Destination</th>
+                    <th>Departure Date</th>
+                    <th>Amount (PKR)</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-bookings-tbody">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ================= TAB 2: DESTINATIONS MANAGEMENT ================= -->
+          <div id="admin-tab-destinations" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 style="font-size: 1.25rem;">Destinations Catalog</h3>
+              <button class="btn btn-primary btn-sm" onclick="openAddDestinationModal()">
+                <i class="fa-solid fa-plus"></i> Add New Destination
+              </button>
+            </div>
+
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Photo</th>
+                    <th>Destination Name</th>
+                    <th>Province</th>
+                    <th>Altitude</th>
+                    <th>Best Season</th>
+                    <th>Budget (PKR)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-destinations-tbody">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ================= TAB 3: PACKAGES MANAGEMENT ================= -->
+          <div id="admin-tab-packages" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 style="font-size: 1.25rem;">Tour Packages Catalog</h3>
+              <button class="btn btn-primary btn-sm" onclick="openAddPackageModal()">
+                <i class="fa-solid fa-plus"></i> Add New Package
+              </button>
+            </div>
+
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Image</th>
+                    <th>Package Title</th>
+                    <th>Destination</th>
+                    <th>Duration</th>
+                    <th>Price (PKR)</th>
+                    <th>Rating</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-packages-tbody">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ================= TAB 4: REVIEWS MANAGEMENT ================= -->
+          <div id="admin-tab-reviews" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 style="font-size: 1.25rem;">Customer Reviews & Feedback</h3>
+            </div>
+
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Reviewer</th>
+                    <th>Target</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-reviews-tbody">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= ADD / EDIT DESTINATION MODAL ================= -->
+  <div id="dest-form-modal" class="modal-backdrop">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="dest-form-modal-title">Add New Destination</h3>
+        <button class="modal-close" onclick="closeModal('dest-form-modal')">&times;</button>
+      </div>
+      <form id="dest-crud-form">
+        <div class="modal-body">
+          <input type="hidden" id="dest-form-id">
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="dest-form-name">Destination Name *</label>
+              <input type="text" id="dest-form-name" class="form-control" required placeholder="e.g. Kumrat Valley">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="dest-form-province">Province / Region *</label>
+              <select id="dest-form-province" class="form-select">
+                <option value="Gilgit-Baltistan">Gilgit-Baltistan</option>
+                <option value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Sindh">Sindh</option>
+                <option value="Azad Jammu & Kashmir">Azad Jammu & Kashmir</option>
+                <option value="Federal Capital">Federal Capital</option>
+                <option value="Balochistan">Balochistan</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="dest-form-altitude">Altitude</label>
+              <input type="text" id="dest-form-altitude" class="form-control" placeholder="e.g. 2,400 m (7,870 ft)">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="dest-form-season">Best Time to Visit *</label>
+              <input type="text" id="dest-form-season" class="form-control" required placeholder="e.g. May to September">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="dest-form-budget">Est. Budget (PKR) *</label>
+              <input type="number" id="dest-form-budget" class="form-control" required placeholder="25000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="dest-form-img">Cover Image URL *</label>
+            <input type="url" id="dest-form-img" class="form-control" required placeholder="https://images.unsplash.com/photo-...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="dest-form-tagline">Tagline</label>
+            <input type="text" id="dest-form-tagline" class="form-control" placeholder="e.g. The Fairytale Forest & Cascading Waterfalls">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="dest-form-desc">Detailed Description *</label>
+            <textarea id="dest-form-desc" class="form-control" rows="3" required placeholder="Full description of geography, culture, highlights..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="dest-form-attractions">Attractions (comma-separated)</label>
+            <input type="text" id="dest-form-attractions" class="form-control" placeholder="Do Kala Chashma, Katora Lake, Jahaz Banda">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('dest-form-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Save Destination</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= ADD / EDIT PACKAGE MODAL ================= -->
+  <div id="pkg-form-modal" class="modal-backdrop">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="pkg-form-modal-title">Add New Tour Package</h3>
+        <button class="modal-close" onclick="closeModal('pkg-form-modal')">&times;</button>
+      </div>
+      <form id="pkg-crud-form">
+        <div class="modal-body">
+          <input type="hidden" id="pkg-form-id">
+
+          <div class="form-group">
+            <label class="form-label" for="pkg-form-title">Package Title *</label>
+            <input type="text" id="pkg-form-title" class="form-control" required placeholder="e.g. Majestic Deosai & Skardu Safari">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="pkg-form-dest">Primary Destination *</label>
+              <input type="text" id="pkg-form-dest" class="form-control" required placeholder="e.g. Skardu">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="pkg-form-category">Travel Style Category *</label>
+              <select id="pkg-form-category" class="form-select">
+                <option value="Mountain Expeditions">Mountain Expeditions</option>
+                <option value="Lakes & Valleys">Lakes & Valleys</option>
+                <option value="Cultural & Heritage">Cultural & Heritage</option>
+                <option value="Desert & Coastal">Desert & Coastal</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="pkg-form-duration">Duration (Text) *</label>
+              <input type="text" id="pkg-form-duration" class="form-control" required placeholder="e.g. 6 Days / 5 Nights">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="pkg-form-days">Total Days *</label>
+              <input type="number" id="pkg-form-days" class="form-control" required value="6">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="pkg-form-price">Price (PKR) *</label>
+              <input type="number" id="pkg-form-price" class="form-control" required placeholder="65000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pkg-form-img">Hero Image URL *</label>
+            <input type="url" id="pkg-form-img" class="form-control" required placeholder="https://images.unsplash.com/photo-...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pkg-form-overview">Package Overview *</label>
+            <textarea id="pkg-form-overview" class="form-control" rows="3" required placeholder="Trip overview and highlights..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pkg-form-inclusions">Included Services (comma-separated)</label>
+            <input type="text" id="pkg-form-inclusions" class="form-control" value="AC Coaster / 4x4 Prado, 3-star Hotel Stays, Daily Breakfast & Dinner, Tour Guide">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('pkg-form-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Save Tour Package</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= SQL SCHEMA VIEWER MODAL ================= -->
+  <div id="sql-modal" class="modal-backdrop">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-database text-primary"></i> Supabase SQL Schema Script</h3>
+        <button class="modal-close" onclick="closeModal('sql-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--slate-600); margin-bottom: 1rem;">
+          Copy this script and paste it into the <strong>SQL Editor</strong> in your Supabase dashboard (<a href="https://supabase.com/dashboard/project/lfinbgixmzqwoqzkwqdx/sql" target="_blank" style="color: var(--primary); text-decoration: underline;">Project SQL Editor</a>) to create all tables and RLS security policies.
+        </p>
+        <textarea id="sql-schema-textarea" class="form-control" rows="12" style="font-family: monospace; font-size: 0.85rem; background: var(--slate-900); color: #a7f3d0;" readonly>
+-- ====================================================================
+-- TRAVEL EXPLORER PAKISTAN - SUPABASE DATABASE SCHEMA
+-- ====================================================================
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE IF NOT EXISTS public.destinations (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    tagline TEXT,
+    province TEXT NOT NULL,
+    altitude TEXT,
+    best_time TEXT NOT NULL,
+    estimated_cost JSONB NOT NULL,
+    image_url TEXT NOT NULL,
+    gallery TEXT[] DEFAULT '{}',
+    description TEXT NOT NULL,
+    attractions TEXT[] NOT NULL,
+    activities TEXT[] NOT NULL,
+    travel_tips TEXT[] NOT NULL,
+    rating NUMERIC(2,1) DEFAULT 4.9,
+    reviews_count INT DEFAULT 0,
+    featured BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.packages (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    destination_id TEXT,
+    destination_name TEXT NOT NULL,
+    duration TEXT NOT NULL,
+    days INT NOT NULL,
+    nights INT NOT NULL,
+    price_pkr NUMERIC(10,2) NOT NULL,
+    price_usd NUMERIC(10,2) NOT NULL,
+    image_url TEXT NOT NULL,
+    category TEXT NOT NULL,
+    difficulty TEXT DEFAULT 'Moderate',
+    group_size TEXT DEFAULT '12-16 People',
+    departure_city TEXT DEFAULT 'Islamabad',
+    available_dates TEXT[] NOT NULL,
+    included_services TEXT[] NOT NULL,
+    excluded_services TEXT[] NOT NULL,
+    itinerary JSONB NOT NULL,
+    overview TEXT NOT NULL,
+    rating NUMERIC(2,1) DEFAULT 4.9,
+    reviews_count INT DEFAULT 0,
+    featured BOOLEAN DEFAULT false,
+    discount_percentage INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.bookings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    booking_reference TEXT UNIQUE NOT NULL,
+    package_id TEXT,
+    package_title TEXT NOT NULL,
+    destination_name TEXT NOT NULL,
+    travel_date DATE NOT NULL,
+    travelers_count INT NOT NULL DEFAULT 1,
+    travelers_breakdown JSONB DEFAULT '{"adults": 1, "children": 0}'::jsonb,
+    customer_name TEXT NOT NULL,
+    customer_email TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    customer_cnic TEXT,
+    departure_city TEXT NOT NULL DEFAULT 'Islamabad',
+    addons JSONB DEFAULT '[]'::jsonb,
+    special_requests TEXT,
+    subtotal_pkr NUMERIC(10,2) NOT NULL,
+    addons_pkr NUMERIC(10,2) DEFAULT 0,
+    total_pkr NUMERIC(10,2) NOT NULL,
+    payment_method TEXT DEFAULT 'Cash on Arrival',
+    payment_status TEXT DEFAULT 'Pending',
+    booking_status TEXT DEFAULT 'Confirmed',
+    user_id UUID,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.reviews (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    target_type TEXT NOT NULL,
+    target_id TEXT,
+    reviewer_name TEXT NOT NULL,
+    reviewer_email TEXT,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT NOT NULL,
+    trip_date TEXT,
+    verified BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.destinations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.packages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public Read Destinations" ON public.destinations FOR SELECT USING (true);
+CREATE POLICY "Public All Destinations" ON public.destinations FOR ALL USING (true);
+CREATE POLICY "Public Read Packages" ON public.packages FOR SELECT USING (true);
+CREATE POLICY "Public All Packages" ON public.packages FOR ALL USING (true);
+CREATE POLICY "Public All Bookings" ON public.bookings FOR ALL USING (true);
+CREATE POLICY "Public All Reviews" ON public.reviews FOR ALL USING (true);
+        </textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('sql-modal')">Close</button>
+        <button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('sql-schema-textarea').value); showToast('SQL Schema copied to clipboard!', 'success');">
+          <i class="fa-solid fa-copy"></i> Copy SQL to Clipboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Travel Explorer Pakistan. All rights reserved.</p>
+        <div>
+          <span id="footer-supabase-status" class="backend-status-badge">
+            <i class="fa-solid fa-spinner fa-spin"></i> Checking Supabase Backend...
+          </span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Admin Lock / Session Check
+      let isAdminUnlocked = sessionStorage.getItem("tep_admin_unlocked") === "true";
+      const currentUser = TEP_AUTH.getCurrentUser();
+      if (currentUser && currentUser.role === "admin") {
+        isAdminUnlocked = true;
+      }
+
+      const lockScreen = document.getElementById("admin-lock-screen");
+      const adminContent = document.getElementById("admin-content");
+
+      function updateAdminLockState() {
+        if (isAdminUnlocked) {
+          lockScreen.style.display = "none";
+          adminContent.style.display = "block";
+          loadAdminData();
+        } else {
+          adminContent.style.display = "none";
+          lockScreen.style.display = "block";
+        }
+      }
+
+      document.getElementById("btn-unlock-admin").addEventListener("click", () => {
+        const pass = document.getElementById("admin-passcode-input").value;
+        if (pass === "admin123" || pass === "pakistan") {
+          isAdminUnlocked = true;
+          sessionStorage.setItem("tep_admin_unlocked", "true");
+          showToast("Admin access granted!", "success");
+          updateAdminLockState();
+        } else {
+          showToast("Incorrect passcode. Try 'admin123'", "error");
+        }
+      });
+
+      document.getElementById("btn-quick-demo-admin").addEventListener("click", () => {
+        isAdminUnlocked = true;
+        sessionStorage.setItem("tep_admin_unlocked", "true");
+        TEP_AUTH.loginDemoUser("admin");
+        showToast("Unlocked as Administrator!", "success");
+        updateAdminLockState();
+      });
+
+      // -------------------------------------------------------------
+      // DATA LOADING & RENDERING
+      // -------------------------------------------------------------
+      async function loadAdminData() {
+        // Stats
+        const stats = await TEP_DB.getDashboardStats();
+        document.getElementById("stat-total-bookings").innerText = stats.totalBookings;
+        document.getElementById("stat-confirmed-bookings").innerText = stats.confirmedBookings;
+        document.getElementById("stat-total-revenue").innerText = `PKR ${stats.totalRevenuePkr.toLocaleString()}`;
+        document.getElementById("stat-destinations-count").innerText = stats.destinationsCount;
+        document.getElementById("stat-packages-count").innerText = stats.packagesCount;
+
+        document.getElementById("badge-bookings-count").innerText = stats.totalBookings;
+        document.getElementById("badge-dest-count").innerText = stats.destinationsCount;
+        document.getElementById("badge-pkg-count").innerText = stats.packagesCount;
+        document.getElementById("badge-rev-count").innerText = stats.reviewsCount;
+
+        await renderBookings();
+        await renderDestinations();
+        await renderPackages();
+        await renderReviews();
+      }
+
+      // 1. Render Bookings
+      async function renderBookings() {
+        const bookings = await TEP_DB.getBookings();
+        const tbody = document.getElementById("admin-bookings-tbody");
+        const query = document.getElementById("admin-search-bookings").value.toLowerCase().trim();
+
+        const filtered = bookings.filter(b => {
+          return !query || 
+            b.booking_reference.toLowerCase().includes(query) ||
+            b.customer_name.toLowerCase().includes(query) ||
+            b.customer_email.toLowerCase().includes(query) ||
+            b.destination_name.toLowerCase().includes(query);
+        });
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--slate-400); padding: 2rem;">No bookings found.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = filtered.map(b => `
+          <tr>
+            <td>
+              <strong style="color: var(--primary); font-family: monospace;">${b.booking_reference}</strong>
+              <div style="font-size: 0.75rem; color: var(--slate-400);">${new Date(b.created_at).toLocaleDateString()}</div>
+            </td>
+            <td>
+              <strong>${b.customer_name}</strong>
+              <div style="font-size: 0.8rem; color: var(--slate-500);">${b.customer_email} &bull; ${b.customer_phone}</div>
+            </td>
+            <td>
+              <strong>${b.package_title}</strong>
+              <div style="font-size: 0.8rem; color: var(--slate-500);"><i class="fa-solid fa-location-dot"></i> ${b.destination_name}</div>
+            </td>
+            <td>
+              <strong>${b.travel_date}</strong>
+              <div style="font-size: 0.8rem; color: var(--slate-500);">${b.travelers_count} Travelers (${b.departure_city})</div>
+            </td>
+            <td>
+              <strong style="font-size: 1rem; color: var(--slate-900);">PKR ${Number(b.total_pkr).toLocaleString()}</strong>
+              <div style="font-size: 0.75rem; color: var(--slate-500);">${b.payment_method}</div>
+            </td>
+            <td>
+              <select onchange="updateBookingStatus('${b.booking_reference}', this.value)" class="form-select form-select-sm" style="font-size: 0.8rem; padding: 0.25rem 0.5rem; font-weight: 700; ${b.booking_status === 'Confirmed' ? 'color: var(--success);' : (b.booking_status === 'Cancelled' ? 'color: var(--danger);' : 'color: #b45309;')}">
+                <option value="Confirmed" ${b.booking_status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+                <option value="Pending" ${b.booking_status === 'Pending' ? 'selected' : ''}>Pending</option>
+                <option value="Cancelled" ${b.booking_status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              </select>
+            </td>
+            <td>
+              <button onclick="deleteBookingRow('${b.booking_reference}')" class="btn btn-danger btn-sm" title="Delete Booking" style="padding: 0.35rem 0.65rem;">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      document.getElementById("admin-search-bookings").addEventListener("input", renderBookings);
+
+      window.updateBookingStatus = async function(ref, newStatus) {
+        await TEP_DB.updateBookingStatus(ref, newStatus);
+        showToast(`Booking ${ref} status updated to ${newStatus}`);
+        loadAdminData();
+      };
+
+      window.deleteBookingRow = async function(ref) {
+        if (confirm(`Are you sure you want to delete booking ${ref}?`)) {
+          await TEP_DB.deleteBooking(ref);
+          showToast(`Booking ${ref} deleted.`);
+          loadAdminData();
+        }
+      };
+
+      // 2. Render Destinations
+      async function renderDestinations() {
+        const dests = await TEP_DB.getDestinations();
+        const tbody = document.getElementById("admin-destinations-tbody");
+
+        tbody.innerHTML = dests.map(d => `
+          <tr>
+            <td>
+              <img src="${d.image_url}" style="width: 55px; height: 40px; object-fit: cover; border-radius: var(--radius-sm);">
+            </td>
+            <td>
+              <strong>${d.name}</strong>
+              <div style="font-size: 0.8rem; color: var(--slate-500);">${d.tagline || ''}</div>
+            </td>
+            <td><span class="badge badge-primary">${d.province}</span></td>
+            <td>${d.altitude || 'N/A'}</td>
+            <td>${d.best_time.split('(')[0]}</td>
+            <td><strong>PKR ${d.estimated_cost?.budget_pkr?.toLocaleString() || '25,000'}</strong></td>
+            <td>
+              <div style="display: flex; gap: 0.4rem;">
+                <button onclick="editDestination('${d.id}')" class="btn btn-outline btn-sm" style="padding: 0.3rem 0.6rem;">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deleteDestinationRow('${d.id}')" class="btn btn-danger btn-sm" style="padding: 0.3rem 0.6rem;">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      window.openAddDestinationModal = function() {
+        document.getElementById("dest-crud-form").reset();
+        document.getElementById("dest-form-id").value = "";
+        document.getElementById("dest-form-modal-title").innerText = "Add New Destination";
+        openModal("dest-form-modal");
+      };
+
+      window.editDestination = async function(id) {
+        const d = await TEP_DB.getDestinationById(id);
+        if (!d) return;
+
+        document.getElementById("dest-form-id").value = d.id;
+        document.getElementById("dest-form-name").value = d.name;
+        document.getElementById("dest-form-province").value = d.province;
+        document.getElementById("dest-form-altitude").value = d.altitude || "";
+        document.getElementById("dest-form-season").value = d.best_time;
+        document.getElementById("dest-form-budget").value = d.estimated_cost?.budget_pkr || 25000;
+        document.getElementById("dest-form-img").value = d.image_url;
+        document.getElementById("dest-form-tagline").value = d.tagline || "";
+        document.getElementById("dest-form-desc").value = d.description;
+        document.getElementById("dest-form-attractions").value = d.attractions?.join(", ") || "";
+
+        document.getElementById("dest-form-modal-title").innerText = `Edit: ${d.name}`;
+        openModal("dest-form-modal");
+      };
+
+      window.deleteDestinationRow = async function(id) {
+        if (confirm("Are you sure you want to delete this destination?")) {
+          await TEP_DB.deleteDestination(id);
+          showToast("Destination removed.");
+          loadAdminData();
+        }
+      };
+
+      // Destination CRUD Form Submit
+      document.getElementById("dest-crud-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = document.getElementById("dest-form-id").value || document.getElementById("dest-form-name").value.toLowerCase().replace(/\s+/g, "-");
+        const name = document.getElementById("dest-form-name").value.trim();
+        const province = document.getElementById("dest-form-province").value;
+        const altitude = document.getElementById("dest-form-altitude").value.trim();
+        const best_time = document.getElementById("dest-form-season").value.trim();
+        const budget = parseInt(document.getElementById("dest-form-budget").value, 10);
+        const image_url = document.getElementById("dest-form-img").value.trim();
+        const tagline = document.getElementById("dest-form-tagline").value.trim();
+        const description = document.getElementById("dest-form-desc").value.trim();
+        const attractions = document.getElementById("dest-form-attractions").value.split(",").map(s => s.trim()).filter(Boolean);
+
+        const destObj = {
+          id,
+          name,
+          province,
+          altitude,
+          best_time,
+          estimated_cost: {
+            budget_pkr: budget,
+            mid_pkr: budget * 2.2,
+            luxury_pkr: budget * 4.5
+          },
+          image_url,
+          tagline,
+          description,
+          attractions,
+          activities: ["Scenic Exploration", "Photography", "Local Culture"],
+          travel_tips: ["Carry local currency cash", "Respect local culture"],
+          rating: 4.9,
+          reviews_count: 12
+        };
+
+        await TEP_DB.saveDestination(destObj);
+        showToast(`Destination '${name}' saved successfully!`);
+        closeModal("dest-form-modal");
+        loadAdminData();
+      });
+
+      // 3. Render Packages
+      async function renderPackages() {
+        const pkgs = await TEP_DB.getPackages();
+        const tbody = document.getElementById("admin-packages-tbody");
+
+        tbody.innerHTML = pkgs.map(p => `
+          <tr>
+            <td>
+              <img src="${p.image_url}" style="width: 55px; height: 40px; object-fit: cover; border-radius: var(--radius-sm);">
+            </td>
+            <td>
+              <strong>${p.title}</strong>
+              <div style="font-size: 0.8rem; color: var(--slate-500);">${p.category}</div>
+            </td>
+            <td>${p.destination_name}</td>
+            <td><span class="badge badge-accent">${p.duration}</span></td>
+            <td><strong style="color: var(--primary);">PKR ${p.price_pkr.toLocaleString()}</strong></td>
+            <td><i class="fa-solid fa-star text-accent"></i> ${p.rating || '4.9'}</td>
+            <td>
+              <div style="display: flex; gap: 0.4rem;">
+                <button onclick="editPackage('${p.id}')" class="btn btn-outline btn-sm" style="padding: 0.3rem 0.6rem;">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deletePackageRow('${p.id}')" class="btn btn-danger btn-sm" style="padding: 0.3rem 0.6rem;">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      window.openAddPackageModal = function() {
+        document.getElementById("pkg-crud-form").reset();
+        document.getElementById("pkg-form-id").value = "";
+        document.getElementById("pkg-form-modal-title").innerText = "Add Tour Package";
+        openModal("pkg-form-modal");
+      };
+
+      window.editPackage = async function(id) {
+        const p = await TEP_DB.getPackageById(id);
+        if (!p) return;
+
+        document.getElementById("pkg-form-id").value = p.id;
+        document.getElementById("pkg-form-title").value = p.title;
+        document.getElementById("pkg-form-dest").value = p.destination_name;
+        document.getElementById("pkg-form-category").value = p.category;
+        document.getElementById("pkg-form-duration").value = p.duration;
+        document.getElementById("pkg-form-days").value = p.days;
+        document.getElementById("pkg-form-price").value = p.price_pkr;
+        document.getElementById("pkg-form-img").value = p.image_url;
+        document.getElementById("pkg-form-overview").value = p.overview;
+        document.getElementById("pkg-form-inclusions").value = p.included_services?.join(", ") || "";
+
+        document.getElementById("pkg-form-modal-title").innerText = `Edit: ${p.title}`;
+        openModal("pkg-form-modal");
+      };
+
+      window.deletePackageRow = async function(id) {
+        if (confirm("Are you sure you want to delete this tour package?")) {
+          await TEP_DB.deletePackage(id);
+          showToast("Package deleted.");
+          loadAdminData();
+        }
+      };
+
+      // Package CRUD Form Submit
+      document.getElementById("pkg-crud-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = document.getElementById("pkg-form-id").value || ("pkg-" + Date.now());
+        const title = document.getElementById("pkg-form-title").value.trim();
+        const destName = document.getElementById("pkg-form-dest").value.trim();
+        const category = document.getElementById("pkg-form-category").value;
+        const duration = document.getElementById("pkg-form-duration").value.trim();
+        const days = parseInt(document.getElementById("pkg-form-days").value, 10);
+        const price_pkr = parseInt(document.getElementById("pkg-form-price").value, 10);
+        const image_url = document.getElementById("pkg-form-img").value.trim();
+        const overview = document.getElementById("pkg-form-overview").value.trim();
+        const included = document.getElementById("pkg-form-inclusions").value.split(",").map(s => s.trim()).filter(Boolean);
+
+        const pkgObj = {
+          id,
+          title,
+          destination_id: destName.toLowerCase().replace(/\s+/g, "-"),
+          destination_name: destName,
+          duration,
+          days,
+          nights: days > 1 ? days - 1 : 1,
+          price_pkr,
+          price_usd: Math.round(price_pkr / 280),
+          image_url,
+          category,
+          difficulty: "Moderate",
+          group_size: "12 - 16 Travelers",
+          departure_city: "Islamabad",
+          available_dates: ["2026-10-15", "2026-10-30", "2026-11-15"],
+          included_services: included,
+          excluded_services: ["Personal shopping", "Lunch meals"],
+          itinerary: [
+            { day: 1, title: `Arrival & Transfer to ${destName}`, details: "Meet and greet, road trip to destination." },
+            { day: 2, title: "Scenic Sightseeing & Exploration", details: "Explore major viewpoints and local attractions." }
+          ],
+          overview,
+          rating: 4.9,
+          reviews_count: 24,
+          featured: true
+        };
+
+        await TEP_DB.savePackage(pkgObj);
+        showToast(`Package '${title}' saved successfully!`);
+        closeModal("pkg-form-modal");
+        loadAdminData();
+      });
+
+      // 4. Render Reviews
+      async function renderReviews() {
+        const revs = await TEP_DB.getReviews();
+        const tbody = document.getElementById("admin-reviews-tbody");
+
+        tbody.innerHTML = revs.map(r => `
+          <tr>
+            <td>
+              <strong>${r.reviewer_name}</strong>
+              <div style="font-size: 0.8rem; color: var(--slate-500);">${r.reviewer_email || 'Verified Guest'}</div>
+            </td>
+            <td><span class="badge badge-traveler">${r.target_id || r.target_type}</span></td>
+            <td><span style="color: var(--accent);">${'⭐'.repeat(r.rating)}</span></td>
+            <td style="max-width: 320px; font-size: 0.85rem; color: var(--slate-700);">"${r.comment}"</td>
+            <td>${r.trip_date || '2026'}</td>
+            <td>
+              <button onclick="deleteReviewRow('${r.id}')" class="btn btn-danger btn-sm" style="padding: 0.3rem 0.6rem;">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      window.deleteReviewRow = async function(id) {
+        if (confirm("Delete this review?")) {
+          await TEP_DB.deleteReview(id);
+          showToast("Review deleted.");
+          loadAdminData();
+        }
+      };
+
+      // -------------------------------------------------------------
+      // TAB SWITCHING
+      // -------------------------------------------------------------
+      const tabBtnBookings = document.getElementById("tab-btn-bookings");
+      const tabBtnDest = document.getElementById("tab-btn-destinations");
+      const tabBtnPkg = document.getElementById("tab-btn-packages");
+      const tabBtnRev = document.getElementById("tab-btn-reviews");
+
+      const tabBookings = document.getElementById("admin-tab-bookings");
+      const tabDest = document.getElementById("admin-tab-destinations");
+      const tabPkg = document.getElementById("admin-tab-packages");
+      const tabRev = document.getElementById("admin-tab-reviews");
+
+      function switchTab(btn, content) {
+        [tabBtnBookings, tabBtnDest, tabBtnPkg, tabBtnRev].forEach(b => b.classList.remove("active"));
+        [tabBookings, tabDest, tabPkg, tabRev].forEach(c => c.style.display = "none");
+
+        btn.classList.add("active");
+        content.style.display = "block";
+      }
+
+      tabBtnBookings.addEventListener("click", () => switchTab(tabBtnBookings, tabBookings));
+      tabBtnDest.addEventListener("click", () => switchTab(tabBtnDest, tabDest));
+      tabBtnPkg.addEventListener("click", () => switchTab(tabBtnPkg, tabPkg));
+      tabBtnRev.addEventListener("click", () => switchTab(tabBtnRev, tabRev));
+
+      // -------------------------------------------------------------
+      // SUPABASE CLOUD OPERATIONS
+      // -------------------------------------------------------------
+      document.getElementById("btn-check-supabase").addEventListener("click", async () => {
+        showToast("Checking Supabase connection...", "info");
+        const status = await checkSupabaseConnection();
+        if (status.connected) {
+          alert(`✅ Supabase Cloud Connected!\n\nProject: ${SUPABASE_CONFIG.projectRef}\nStatus: ${status.message}`);
+        } else {
+          alert(`⚠️ Supabase Cloud Notice:\n\n${status.message}\n\nLocal persistence engine is actively maintaining all records.`);
+        }
+      });
+
+      document.getElementById("btn-seed-supabase").addEventListener("click", async () => {
+        if (!confirm("This will upload all 10 destinations, tour packages, and reviews to your Supabase project. Continue?")) return;
+        
+        showToast("Seeding records to Supabase...", "info");
+        try {
+          const res = await seedSupabaseDatabase();
+          if (res.errors.length > 0) {
+            alert(`⚠️ Supabase Seed Notice:\n\n${res.errors.join("\n")}\n\nMake sure to run the SQL schema first via the 'View SQL Schema' button.`);
+          } else {
+            showToast(`Successfully uploaded ${res.destinations} destinations, ${res.packages} packages to Supabase!`, "success");
+          }
+        } catch (e) {
+          alert(`Supabase Seed Error:\n${e.message}\n\nPlease run the SQL Schema in your Supabase dashboard first.`);
+        }
+      });
+
+      document.getElementById("btn-view-sql").addEventListener("click", () => {
+        openModal("sql-modal");
+      });
+
+      updateAdminLockState();
+    });
+  </script>
+</body>
+</html>

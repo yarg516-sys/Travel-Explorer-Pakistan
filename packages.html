@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tour Packages Across Pakistan | Travel Explorer Pakistan</title>
+  <meta name="description" content="Explore original curated travel packages to Hunza, Skardu, Swat, Fairy Meadows, Neelum Valley, and beyond. Complete with itineraries, prices, and online booking.">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-symbol"><i class="fa-solid fa-mountain-sun"></i></div>
+        <div class="brand-text">Travel Explorer <span>Pakistan</span></div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="destinations.html" class="nav-link">Destinations</a></li>
+          <li><a href="packages.html" class="nav-link active">Tour Packages</a></li>
+          <li><a href="booking.html" class="nav-link">Trip Booking</a></li>
+          <li><a href="account.html" class="nav-link">My Account</a></li>
+          <li><a href="admin.html" class="nav-link text-primary"><i class="fa-solid fa-shield-halved"></i> Admin</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div id="nav-auth-container"></div>
+        <button class="mobile-toggle" aria-label="Toggle Menu"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Header Banner -->
+    <section style="background: linear-gradient(135deg, var(--slate-900) 0%, var(--primary-dark) 100%); color: var(--white); padding: 4.5rem 0 3.5rem;">
+      <div class="container text-center" style="text-align: center;">
+        <span class="badge badge-accent" style="margin-bottom: 1rem;"><i class="fa-solid fa-compass"></i> CURATED EXPEDITIONS</span>
+        <h1 style="color: var(--white); font-size: 3rem; margin-bottom: 1rem;">Handcrafted Tour Packages</h1>
+        <p style="max-width: 750px; margin: 0 auto; color: rgba(255, 255, 255, 0.85); font-size: 1.15rem;">
+          Transparent pricing, daily itineraries, certified mountain guides, and verified 4x4 / AC transport across the Karakoram, Himalayas, and beyond.
+        </p>
+      </div>
+    </section>
+
+    <!-- Filters Section -->
+    <section style="background: var(--white); border-bottom: 1px solid var(--slate-200); padding: 2rem 0;">
+      <div class="container">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+          
+          <!-- Search Input -->
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="pkg-search"><i class="fa-solid fa-magnifying-glass text-primary"></i> Search Packages</label>
+            <input type="text" id="pkg-search" class="form-control" placeholder="Search by name or keyword...">
+          </div>
+
+          <!-- Destination Filter -->
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="filter-destination"><i class="fa-solid fa-location-dot text-primary"></i> Destination</label>
+            <select id="filter-destination" class="form-select">
+              <option value="all">All Destinations</option>
+              <option value="hunza-valley">Hunza Valley</option>
+              <option value="skardu-valley">Skardu</option>
+              <option value="swat-valley">Swat Valley</option>
+              <option value="fairy-meadows">Fairy Meadows</option>
+              <option value="neelum-valley">Neelum Valley</option>
+              <option value="naran-kaghan">Naran & Kaghan</option>
+              <option value="lahore-heritage">Lahore</option>
+              <option value="karachi-coastal">Karachi Coast</option>
+            </select>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="filter-category"><i class="fa-solid fa-layer-group text-primary"></i> Travel Style</label>
+            <select id="filter-category" class="form-select">
+              <option value="all">All Styles</option>
+              <option value="Mountain Expeditions">Mountain Expeditions</option>
+              <option value="Lakes & Valleys">Lakes & Valleys</option>
+              <option value="Cultural & Heritage">Cultural & Heritage</option>
+              <option value="Desert & Coastal">Desert & Coastal</option>
+            </select>
+          </div>
+
+          <!-- Duration Filter -->
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="filter-duration"><i class="fa-regular fa-clock text-primary"></i> Duration</label>
+            <select id="filter-duration" class="form-select">
+              <option value="all">Any Duration</option>
+              <option value="3-4">Short (3 - 4 Days)</option>
+              <option value="5-6">Medium (5 - 6 Days)</option>
+              <option value="7-8">Long (7 - 8 Days)</option>
+            </select>
+          </div>
+
+          <!-- Sort Filter -->
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="filter-sort"><i class="fa-solid fa-arrow-down-short-wide text-primary"></i> Sort By</label>
+            <select id="filter-sort" class="form-select">
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="duration-asc">Duration: Short to Long</option>
+              <option value="rating-desc">Highest Rated</option>
+            </select>
+          </div>
+
+          <!-- Reset Filter Button -->
+          <div>
+            <button id="btn-reset-filters" class="btn btn-outline btn-block" style="height: 48px;">
+              <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Packages Listing -->
+    <section class="section">
+      <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <h2 style="font-size: 1.5rem;"><span id="packages-count">8</span> Available Packages</h2>
+          <div style="font-size: 0.9rem; color: var(--slate-500);">
+            <i class="fa-solid fa-calendar-check text-success"></i> Fixed weekly group & customized private departures
+          </div>
+        </div>
+
+        <div id="packages-full-grid" class="packages-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Travel Explorer Pakistan. All rights reserved.</p>
+        <div>
+          <span id="footer-supabase-status" class="backend-status-badge">
+            <i class="fa-solid fa-spinner fa-spin"></i> Checking Supabase Backend...
+          </span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      let allPackages = await TEP_DB.getPackages();
+
+      // Read URL Params
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlDest = urlParams.get("dest");
+      const urlCat = urlParams.get("cat");
+      const urlDur = urlParams.get("dur");
+      const urlSearch = urlParams.get("search");
+
+      if (urlDest) document.getElementById("filter-destination").value = urlDest;
+      if (urlCat) document.getElementById("filter-category").value = urlCat;
+      if (urlDur) {
+        if (urlDur === "short") document.getElementById("filter-duration").value = "3-4";
+        else if (urlDur === "medium") document.getElementById("filter-duration").value = "5-6";
+        else if (urlDur === "long") document.getElementById("filter-duration").value = "7-8";
+      }
+      if (urlSearch) document.getElementById("pkg-search").value = urlSearch;
+
+      function renderPackages() {
+        const searchVal = document.getElementById("pkg-search").value.toLowerCase().trim();
+        const destVal = document.getElementById("filter-destination").value;
+        const catVal = document.getElementById("filter-category").value;
+        const durVal = document.getElementById("filter-duration").value;
+        const sortVal = document.getElementById("filter-sort").value;
+
+        let filtered = allPackages.filter(p => {
+          // Search match
+          const matchSearch = !searchVal || 
+            p.title.toLowerCase().includes(searchVal) || 
+            p.destination_name.toLowerCase().includes(searchVal) ||
+            p.overview.toLowerCase().includes(searchVal);
+
+          // Destination match
+          const matchDest = destVal === "all" || p.destination_id === destVal;
+
+          // Category match
+          const matchCat = catVal === "all" || p.category.toLowerCase() === catVal.toLowerCase();
+
+          // Duration match
+          let matchDur = true;
+          if (durVal === "3-4") matchDur = p.days >= 3 && p.days <= 4;
+          else if (durVal === "5-6") matchDur = p.days >= 5 && p.days <= 6;
+          else if (durVal === "7-8") matchDur = p.days >= 7;
+
+          return matchSearch && matchDest && matchCat && matchDur;
+        });
+
+        // Sorting
+        if (sortVal === "price-asc") {
+          filtered.sort((a, b) => a.price_pkr - b.price_pkr);
+        } else if (sortVal === "price-desc") {
+          filtered.sort((a, b) => b.price_pkr - a.price_pkr);
+        } else if (sortVal === "duration-asc") {
+          filtered.sort((a, b) => a.days - b.days);
+        } else if (sortVal === "rating-desc") {
+          filtered.sort((a, b) => (b.rating || 5) - (a.rating || 5));
+        }
+
+        document.getElementById("packages-count").innerText = filtered.length;
+        const grid = document.getElementById("packages-full-grid");
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; background: var(--white); border-radius: var(--radius-lg);">
+              <i class="fa-solid fa-map-location-dot" style="font-size: 3rem; color: var(--slate-300); margin-bottom: 1rem;"></i>
+              <h3>No tour packages found</h3>
+              <p class="text-muted">Try resetting filters to view all available trips.</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = filtered.map(p => `
+          <div class="pkg-card">
+            <div class="pkg-card-img-wrap">
+              <img src="${p.image_url}" alt="${p.title}" class="pkg-card-img" loading="lazy">
+              ${p.discount_percentage ? `<span class="pkg-discount-ribbon">${p.discount_percentage}% OFF</span>` : ''}
+              <span class="pkg-duration-pill"><i class="fa-regular fa-clock"></i> ${p.duration}</span>
+            </div>
+            <div class="pkg-card-body">
+              <div class="pkg-location-row">
+                <span><i class="fa-solid fa-location-dot text-primary"></i> ${p.destination_name}</span>
+                <span style="font-weight: 700; color: var(--accent);"><i class="fa-solid fa-star"></i> ${p.rating || '4.9'} (${p.reviews_count || 30})</span>
+              </div>
+              <h3 class="pkg-card-title">${p.title}</h3>
+              <p style="font-size: 0.875rem; color: var(--slate-600); margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                ${p.overview}
+              </p>
+              
+              <ul class="pkg-features-list">
+                ${p.included_services.slice(0, 3).map(s => `<li><i class="fa-solid fa-circle-check"></i> ${s}</li>`).join("")}
+              </ul>
+
+              <!-- Available departure dates chips -->
+              <div style="margin-bottom: 1rem;">
+                <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--slate-400); font-weight: 700; display: block; margin-bottom: 0.35rem;">Upcoming Departures</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+                  ${p.available_dates.slice(0, 2).map(d => `<span style="font-size: 0.75rem; background: var(--primary-subtle); color: var(--primary); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-weight: 600;"><i class="fa-regular fa-calendar"></i> ${d}</span>`).join("")}
+                </div>
+              </div>
+
+              <div class="pkg-card-footer">
+                <div class="pkg-price-group">
+                  <span class="pkg-price-amount">PKR ${p.price_pkr.toLocaleString()}</span>
+                  <span class="pkg-price-usd">Approx. $${p.price_usd} USD / person</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a href="package-details.html?id=${p.id}" class="btn btn-outline btn-sm">Itinerary</a>
+                  <a href="booking.html?pkg=${p.id}" class="btn btn-primary btn-sm">Book</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      // Event listeners
+      document.getElementById("pkg-search").addEventListener("input", renderPackages);
+      document.getElementById("filter-destination").addEventListener("change", renderPackages);
+      document.getElementById("filter-category").addEventListener("change", renderPackages);
+      document.getElementById("filter-duration").addEventListener("change", renderPackages);
+      document.getElementById("filter-sort").addEventListener("change", renderPackages);
+
+      document.getElementById("btn-reset-filters").addEventListener("click", () => {
+        document.getElementById("pkg-search").value = "";
+        document.getElementById("filter-destination").value = "all";
+        document.getElementById("filter-category").value = "all";
+        document.getElementById("filter-duration").value = "all";
+        document.getElementById("filter-sort").value = "price-asc";
+        renderPackages();
+      });
+
+      renderPackages();
+    });
+  </script>
+</body>
+</html>
